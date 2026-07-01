@@ -75,14 +75,14 @@ export function TimesheetInputTable({
   const [activeRowId, setActiveRowId] = useState<string | null>(null);
 
   const [colWidths, setColWidths] = useState<Record<string, number>>({
-    no: 60,
-    l07: 140,
-    aeCode: 120,
-    bus: 140,
-    file: 260,
-    date: 180,
-    status: 140,
-    actions: 120,
+    no: 70,
+    l07: 160,
+    aeCode: 140,
+    bus: 160,
+    file: 320,
+    date: 200,
+    status: 150,
+    actions: 140,
   });
 
   const handleMouseDown = (e: React.MouseEvent, colKey: string) => {
@@ -144,89 +144,95 @@ export function TimesheetInputTable({
   };
 
   return (
-    <div id="roster-center-table-wrapper" className="flex-1 flex flex-col min-h-0 relative font-[family-name:var(--font-table,var(--font-main))]">
+    <div 
+      id="roster-center-table-wrapper" 
+      className="flex-1 flex flex-col min-h-0 relative font-[family-name:var(--font-table,var(--font-main))]"
+      style={{
+        "--font-size": "14.5px",
+      } as React.CSSProperties}
+    >
       <div className="relative flex flex-col flex-1 min-h-0 bg-white overflow-hidden p-0">
         <div className="flex-1 overflow-auto custom-scrollbar bg-white relative min-h-0 shadow-none p-0 border-0 scroll-pt-0">
-          <table className="w-full min-w-max border-separate border-spacing-0 border-l border-t border-rose-100" style={{ tableLayout: "fixed" }}>
+          <table className="w-full min-w-max border-separate border-spacing-0 border-l border-t border-accent/20" style={{ tableLayout: "fixed" }}>
           <thead>
             <tr>
               <th 
-                className="sticky top-0 z-[110] bg-[#fce7f3] border-b border-r border-rose-100 text-[0.85em] font-bold uppercase tracking-[0.22em] text-rose-700 p-4 text-center group select-none shadow-[0_1px_0_#fbcfe8]"
+                className="sticky top-0 z-[110] bg-accent/10 border-b border-r border-accent/20 text-[0.9em] font-bold uppercase tracking-[0.22em] text-accent p-4 text-center group select-none shadow-[0_1px_0_theme(colors.accent.DEFAULT/0.3)]"
                 style={{ width: colWidths.no }}
               >
                 <span>No.</span>
                 <div 
-                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-rose-300/50 bg-transparent transition-all z-50 select-none"
+                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 bg-transparent transition-all z-50 select-none"
                   onMouseDown={(e) => handleMouseDown(e, "no")}
                 />
               </th>
               <th 
-                className="sticky top-0 z-[110] bg-[#fce7f3] border-b border-r border-rose-100 text-[0.85em] font-bold uppercase tracking-[0.22em] text-rose-700 p-4 text-center group select-none shadow-[0_1px_0_#fbcfe8]"
+                className="sticky top-0 z-[110] bg-accent/10 border-b border-r border-accent/20 text-[0.9em] font-bold uppercase tracking-[0.22em] text-accent p-4 text-center group select-none shadow-[0_1px_0_theme(colors.accent.DEFAULT/0.3)]"
                 style={{ width: colWidths.l07 }}
               >
                 <span>L07</span>
                 <div 
-                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-rose-300/50 bg-transparent transition-all z-50 select-none"
+                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 bg-transparent transition-all z-50 select-none"
                   onMouseDown={(e) => handleMouseDown(e, "l07")}
                 />
               </th>
               <th 
-                className="sticky top-0 z-[110] bg-[#fce7f3] border-b border-r border-rose-100 text-[0.85em] font-bold uppercase tracking-[0.22em] text-rose-700 p-4 text-center group select-none shadow-[0_1px_0_#fbcfe8]"
+                className="sticky top-0 z-[110] bg-accent/10 border-b border-r border-accent/20 text-[0.9em] font-bold uppercase tracking-[0.22em] text-accent p-4 text-center group select-none shadow-[0_1px_0_theme(colors.accent.DEFAULT/0.3)]"
                 style={{ width: colWidths.aeCode }}
               >
                 <span>Mã AE</span>
                 <div 
-                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-rose-300/50 bg-transparent transition-all z-50 select-none"
+                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 bg-transparent transition-all z-50 select-none"
                   onMouseDown={(e) => handleMouseDown(e, "aeCode")}
                 />
               </th>
               <th 
-                className="sticky top-0 z-[110] bg-[#fce7f3] border-b border-r border-rose-100 text-[0.85em] font-bold uppercase tracking-[0.22em] text-rose-700 p-4 text-center group select-none shadow-[0_1px_0_#fbcfe8]"
+                className="sticky top-0 z-[110] bg-accent/10 border-b border-r border-accent/20 text-[0.9em] font-bold uppercase tracking-[0.22em] text-accent p-4 text-center group select-none shadow-[0_1px_0_theme(colors.accent.DEFAULT/0.3)]"
                 style={{ width: colWidths.bus }}
               >
                 <span>Business</span>
                 <div 
-                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-rose-300/50 bg-transparent transition-all z-50 select-none"
+                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 bg-transparent transition-all z-50 select-none"
                   onMouseDown={(e) => handleMouseDown(e, "bus")}
                 />
               </th>
               <th 
-                className="sticky top-0 z-[110] bg-[#fce7f3] border-b border-r border-rose-100 text-[0.85em] font-bold uppercase tracking-[0.22em] text-rose-700 p-4 text-center group select-none shadow-[0_1px_0_#fbcfe8]"
+                className="sticky top-0 z-[110] bg-accent/10 border-b border-r border-accent/20 text-[0.9em] font-bold uppercase tracking-[0.22em] text-accent p-4 text-center group select-none shadow-[0_1px_0_theme(colors.accent.DEFAULT/0.3)]"
                 style={{ width: colWidths.file }}
               >
                 <span>File / Link</span>
                 <div 
-                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-rose-300/50 bg-transparent transition-all z-50 select-none"
+                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 bg-transparent transition-all z-50 select-none"
                   onMouseDown={(e) => handleMouseDown(e, "file")}
                 />
               </th>
               <th 
-                className="sticky top-0 z-[110] bg-[#fce7f3] border-b border-r border-rose-100 text-[0.85em] font-bold uppercase tracking-[0.22em] text-rose-700 p-4 text-center group select-none shadow-[0_1px_0_#fbcfe8]"
+                className="sticky top-0 z-[110] bg-accent/10 border-b border-r border-accent/20 text-[0.9em] font-bold uppercase tracking-[0.22em] text-accent p-4 text-center group select-none shadow-[0_1px_0_theme(colors.accent.DEFAULT/0.3)]"
                 style={{ width: colWidths.date }}
               >
                 <span>Ngày Upload</span>
                 <div 
-                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-rose-300/50 bg-transparent transition-all z-50 select-none"
+                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 bg-transparent transition-all z-50 select-none"
                   onMouseDown={(e) => handleMouseDown(e, "date")}
                 />
               </th>
               <th 
-                className="sticky top-0 z-[110] bg-[#fce7f3] border-b border-r border-rose-100 text-[0.85em] font-bold uppercase tracking-[0.22em] text-rose-700 p-4 text-center group select-none shadow-[0_1px_0_#fbcfe8]"
+                className="sticky top-0 z-[110] bg-accent/10 border-b border-r border-accent/20 text-[0.9em] font-bold uppercase tracking-[0.22em] text-accent p-4 text-center group select-none shadow-[0_1px_0_theme(colors.accent.DEFAULT/0.3)]"
                 style={{ width: colWidths.status }}
               >
                 <span>Trạng Thái</span>
                 <div 
-                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-rose-300/50 bg-transparent transition-all z-50 select-none"
+                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 bg-transparent transition-all z-50 select-none"
                   onMouseDown={(e) => handleMouseDown(e, "status")}
                 />
               </th>
               <th 
-                className="sticky top-0 z-[110] bg-[#fce7f3] border-b border-r border-rose-100 text-[0.85em] font-bold uppercase tracking-[0.22em] text-rose-700 p-4 text-center group select-none shadow-[0_1px_0_#fbcfe8]"
+                className="sticky top-0 z-[110] bg-accent/10 border-b border-r border-accent/20 text-[0.9em] font-bold uppercase tracking-[0.22em] text-accent p-4 text-center group select-none shadow-[0_1px_0_theme(colors.accent.DEFAULT/0.3)]"
                 style={{ width: colWidths.actions }}
               >
                 <span>Actions</span>
                 <div 
-                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-rose-300/50 bg-transparent transition-all z-50 select-none"
+                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 bg-transparent transition-all z-50 select-none"
                   onMouseDown={(e) => handleMouseDown(e, "actions")}
                 />
               </th>
@@ -261,7 +267,7 @@ export function TimesheetInputTable({
                   className="transition-colors group animate-in fade-in duration-300 fill-mode-both"
                 >
                   <td
-                    className="px-4 py-2 text-center text-[0.8em] text-foreground/40 border-b border-r border-[#E2E8F0]"
+                    className="px-4 py-3.5 text-center text-[0.85em] text-foreground/40 border-b border-r border-[#E2E8F0]"
                     style={{
                       fontFamily: "var(--font-table, var(--font-main))",
                       fontSize: "var(--font-size)",
@@ -270,7 +276,7 @@ export function TimesheetInputTable({
                     {(currentPage - 1) * itemsPerPage + idx + 1}
                   </td>
                   <td
-                    className="px-4 py-2 border-b border-r border-[#E2E8F0]"
+                    className="px-4 py-3.5 border-b border-r border-[#E2E8F0]"
                     style={{
                       fontFamily: "var(--font-table, var(--font-main))",
                       fontSize: "var(--font-size)",
@@ -293,13 +299,13 @@ export function TimesheetInputTable({
                           }
                         }
                       }}
-                      className="w-full bg-transparent border-none focus:ring-0 text-[1em] font-medium text-foreground p-0"
+                      className="w-full bg-transparent border-none focus:ring-0 text-[1em] font-semibold text-[#3D3935] p-0"
                       style={{ fontFamily: "inherit", fontSize: "inherit" }}
                       placeholder="L07..."
                     />
                   </td>
                   <td
-                    className="px-4 py-2 border-b border-r border-[#E2E8F0]"
+                    className="px-4 py-3.5 border-b border-r border-[#E2E8F0]"
                     style={{
                       fontFamily: "var(--font-table, var(--font-main))",
                       fontSize: "var(--font-size)",
@@ -323,13 +329,13 @@ export function TimesheetInputTable({
                           }
                         }
                       }}
-                      className="w-full bg-transparent border-none focus:ring-0 text-[1em] font-medium text-foreground p-0"
+                      className="w-full bg-transparent border-none focus:ring-0 text-[1em] font-semibold text-[#3D3935] p-0"
                       style={{ fontFamily: "inherit", fontSize: "inherit" }}
                       placeholder="L07..."
                     />
                   </td>
                   <td
-                    className="px-4 py-2 border-b border-r border-[#E2E8F0]"
+                    className="px-4 py-3.5 border-b border-r border-[#E2E8F0]"
                     style={{
                       fontFamily: "var(--font-table, var(--font-main))",
                       fontSize: "var(--font-size)",
@@ -343,7 +349,7 @@ export function TimesheetInputTable({
                       onChange={(e) =>
                         onUpdateRow(row.id, "bus", e.target.value)
                       }
-                      className="w-full bg-transparent border-none focus:ring-0 text-[1em] font-medium text-foreground p-0"
+                      className="w-full bg-transparent border-none focus:ring-0 text-[1em] font-semibold text-[#3D3935] p-0"
                       style={{ fontFamily: "inherit", fontSize: "inherit" }}
                       placeholder="Business..."
                     />
@@ -365,9 +371,9 @@ export function TimesheetInputTable({
                           <FileSpreadsheet className="w-3.5 h-3.5 text-primary group-hover/btn:scale-110 transition-transform" />
                         </button>
                         {row.fileName ? (
-                          <div className="w-full h-8 bg-slate-50/80 border border-emerald-200 rounded-md px-2 text-[0.8em] text-emerald-800 flex items-center justify-between gap-2 overflow-hidden shadow-sm">
+                          <div className="w-full h-8 bg-slate-50/80 border border-accent/30 rounded-md px-2 text-[0.8em] text-accent flex items-center justify-between gap-2 overflow-hidden shadow-sm">
                             <div className="flex items-center gap-1.5 min-w-0 truncate">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                              <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0" />
                               <span className="truncate font-medium" title={row.fileName}>{row.fileName}</span>
                             </div>
                             <button 
@@ -377,7 +383,7 @@ export function TimesheetInputTable({
                                 onUpdateRow(row.id, "status", "pending");
                                 onUpdateRow(row.id, "date", "");
                               }}
-                              className="text-emerald-600/60 hover:text-rose-500 p-0.5 rounded-sm hover:bg-rose-50 shrink-0 transition-colors"
+                              className="text-accent/60 hover:text-accent p-0.5 rounded-sm hover:bg-accent/10 shrink-0 transition-colors"
                               title="Xóa file"
                             >
                               <X className="w-3.5 h-3.5" />
@@ -430,14 +436,14 @@ export function TimesheetInputTable({
                     <div className="flex justify-center">
                       {row.status === "success" ? (
                         <span
-                          className="text-[0.65rem] font-bold uppercase py-0.5 px-2 rounded-full bg-emerald-50 text-emerald-700"
+                          className="text-[0.65rem] font-bold uppercase py-0.5 px-2 rounded-full bg-accent/10 text-accent"
                           style={{ fontSize: "0.625rem" }}
                         >
                           Success
                         </span>
                       ) : row.status === "error" ? (
                         <span
-                          className="text-[0.65rem] font-bold uppercase py-0.5 px-2 rounded-full bg-rose-50 text-rose-700"
+                          className="text-[0.65rem] font-bold uppercase py-0.5 px-2 rounded-full bg-accent/10 text-accent"
                           style={{ fontSize: "0.625rem" }}
                         >
                           Error
@@ -478,7 +484,7 @@ export function TimesheetInputTable({
                       </button>
                       <button
                         onClick={() => onClearRow(row.id)}
-                        className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-rose-600 transition-colors"
+                        className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-accent transition-colors"
                         title="Xóa dòng"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -493,18 +499,18 @@ export function TimesheetInputTable({
       </div>
 
       {/* Footer Controls matching DataTable format */}
-      <div className="px-4 py-1.5 h-auto bg-white border-t border-rose-100 flex items-center justify-between shrink-0 relative z-40 rounded-b-[54px]">
-        <div className="flex items-center gap-3 text-[0.625rem] font-bold uppercase tracking-widest text-rose-300">
+      <div className="px-4 py-1.5 h-auto bg-white border-t border-accent/20 flex items-center justify-between shrink-0 relative z-40 rounded-b-[54px]">
+        <div className="flex items-center gap-3 text-[0.625rem] font-bold uppercase tracking-widest text-accent/30">
           {onRefresh && (
             <button
               onClick={onRefresh}
-              className="p-1 text-rose-200 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors active:scale-95"
+              className="p-1 text-accent/20 hover:text-accent hover:bg-accent/10 rounded-full transition-colors active:scale-95"
               title="Làm mới dữ liệu"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
           )}
-          <span className="font-normal normal-case tracking-normal text-rose-400">
+          <span className="font-normal normal-case tracking-normal text-accent/40">
             {rows.length === 0 ? "0" : (currentPage - 1) * itemsPerPage + 1} -{" "}
             {Math.min(currentPage * itemsPerPage, rows.length)} / {rows.length}
           </span>
@@ -514,7 +520,7 @@ export function TimesheetInputTable({
           {onClearEmptyL07 && (
             <button
               onClick={onClearEmptyL07}
-              className="flex items-center gap-1.5 px-3 py-1 mr-2 bg-rose-50 border border-rose-200 text-rose-500 rounded-lg text-[0.625rem] font-bold uppercase tracking-widest hover:bg-rose-100 hover:text-rose-600 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1 mr-2 bg-accent/10 border border-accent/20 text-accent rounded-lg text-[0.625rem] font-bold uppercase tracking-widest hover:bg-accent/20 hover:text-accent transition-colors"
                title="Xóa rỗng l07"
             >
               <Trash2 className="w-3.5 h-3.5" /> Dọn dòng trống L07
@@ -523,12 +529,12 @@ export function TimesheetInputTable({
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => p - 1)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg border border-rose-100 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-400 hover:text-rose-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-7 h-7 flex items-center justify-center rounded-lg border border-accent/20 bg-white hover:bg-accent/10 hover:border-accent/30 text-accent/40 hover:text-accent transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          <div className="px-2 font-black text-[0.6rem] text-rose-400 select-none flex items-center gap-1">
+          <div className="px-2 font-black text-[0.6rem] text-accent/40 select-none flex items-center gap-1">
             <span>TRANG</span>
             <span className="font-normal">{currentPage}</span>
             <span>/</span>
@@ -538,7 +544,7 @@ export function TimesheetInputTable({
           <button
             disabled={currentPage === totalPages || totalPages === 0}
             onClick={() => setCurrentPage((p) => p + 1)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg border border-rose-100 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-400 hover:text-rose-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-7 h-7 flex items-center justify-center rounded-lg border border-accent/20 bg-white hover:bg-accent/10 hover:border-accent/30 text-accent/40 hover:text-accent transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

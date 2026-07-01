@@ -159,9 +159,9 @@
     position: fixed;
     inset: 0;
     z-index: -2;
-    background: radial-gradient(circle at 10% 20%, rgba(225, 241, 248, 0.45) 0%, transparent 45%),
-                radial-gradient(circle at 90% 80%, rgba(229, 168, 160, 0.18) 0%, transparent 50%),
-                #FDFBFA;
+    background: radial-gradient(circle at 10% 20%, color-mix(in srgb, var(--stripe-color1) 45%, transparent) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, color-mix(in srgb, var(--stripe-color2) 18%, transparent) 0%, transparent 50%),
+                var(--background);
     pointer-events: none;
   }
 

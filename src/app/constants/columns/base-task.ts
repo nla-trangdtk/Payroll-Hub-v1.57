@@ -73,13 +73,13 @@ export const BASE_TASK_COLUMNS = [
   { key: "ldec01", label: "LDEC01", type: "number" as const, width: 90 },
   { key: "moth01", label: "MOTH01", type: "number" as const, width: 90 },
   { key: "totalHours", label: "Total Hours", type: "number" as const, width: 110, cellClassName: "font-black text-slate-900 bg-slate-50" },
-  { key: "academicHours", label: "Academic Hours", type: "number" as const, width: 130, cellClassName: "font-bold text-rose-600 bg-rose-50/20" },
+  { key: "academicHours", label: "Academic Hours", type: "number" as const, width: 130, cellClassName: "font-bold text-accent bg-accent/10" },
   {
     key: "adminHours",
     label: "Admin Hours",
     type: "number" as const,
     width: 110,
-    cellClassName: "font-bold text-emerald-600 bg-emerald-50/20",
-    headerSpanClassName: "text-xs no-underline leading-[11px] text-[#49780f]",
+    cellClassName: "font-bold text-accent bg-accent/20",
+    headerSpanClassName: "text-xs no-underline leading-[11px] text-accent",
   },
 ];

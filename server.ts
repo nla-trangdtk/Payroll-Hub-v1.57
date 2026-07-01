@@ -2,7 +2,6 @@
 import express from "express";
 import path from "path";
 import cors from "cors";
-import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import multer from "multer";
@@ -104,20 +103,15 @@ app.post("/api/gs-export", async (req, res) => {
       console.warn("[API] Public fetch exception:", err);
     }
 
-    // Fallback to credentials.json if public fetch failed or returned HTML
+    // Fallback to Service Account if public fetch failed or returned HTML
     if (!responseOk) {
-      const credsPath = path.join(process.cwd(), "credentials.json");
-      if (!fs.existsSync(credsPath)) {
-        throw new Error("Không thể tải Google Sheet. Vui lòng đảm bảo link đã được chia sẻ công khai hoặc thêm file credentials.json.");
-      }
-
-      const credsContent = fs.readFileSync(credsPath, 'utf8');
-      JSON.parse(credsContent);
-
       const { google } = await import("googleapis");
 
       const auth = new google.auth.GoogleAuth({
-        keyFile: credsPath,
+        credentials: {
+          client_email: process.env.GOOGLE_CLIENT_EMAIL,
+          private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        },
         scopes: ['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/spreadsheets.readonly'],
       });
       const drive = google.drive({ version: 'v3', auth });
@@ -267,27 +261,13 @@ app.post("/api/gs-export", async (req, res) => {
          }
 
          if (errorMsg && (errorMsg.includes("invalid_grant") || errorMsg.toLowerCase().includes("jwt signature"))) {
-           let serviceAccountEmail = "email trong file credentials.json";
-           try {
-             const credsContent = fs.readFileSync(credsPath, 'utf8');
-             const credsJson = JSON.parse(credsContent);
-             if (credsJson.client_email) {
-               serviceAccountEmail = credsJson.client_email;
-             }
-           } catch { /* ignore */ }
+           const serviceAccountEmail = process.env.GOOGLE_CLIENT_EMAIL || "email của bạn";
            
-           throw new Error(`LỖI KHÓA LIÊN KẾT GOOGLE (Invalid JWT Signature / invalid_grant)\n\nKhóa bảo mật trong file credentials.json hiện tại đã BỊ HẾT HẠN, BỊ XÓA hoặc BỊ THU HỒI trên Google Cloud Console.\n\nCÁCH KHẮC PHỤC NHANH:\n1. Truy cập vào Google Cloud Console (https://console.cloud.google.com).\n2. Vào mục IAM & Admin -> Service Accounts (Tài khoản dịch vụ).\n3. Chọn tài khoản dịch vụ của bạn (Ví dụ: ${serviceAccountEmail}).\n4. Nhấp vào tab "Keys" (Khóa), bấm "Add Key" -> "Create new key" -> Chọn định dạng JSON rồi tải về.\n5. Đổi tên file vừa tải về thành "credentials.json" (phải viết thường chính xác).\n6. Kéo thả hoặc upload đè file "credentials.json" mới này vào cột thư mục bên trái phần mềm.\n7. Thử bấm "Đồng bộ" lại.`);
+           throw new Error(`LỖI KHÓA LIÊN KẾT GOOGLE (Invalid JWT Signature / invalid_grant)\n\nKhóa bảo mật trong biến môi trường hiện tại đã BỊ HẾT HẠN, BỊ XÓA hoặc BỊ THU HỒI trên Google Cloud Console.\n\nCÁCH KHẮC PHỤC NHANH:\n1. Truy cập vào Google Cloud Console (https://console.cloud.google.com).\n2. Vào mục IAM & Admin -> Service Accounts (Tài khoản dịch vụ).\n3. Chọn tài khoản dịch vụ của bạn (Ví dụ: ${serviceAccountEmail}).\n4. Nhấp vào tab "Keys" (Khóa), bấm "Add Key" -> "Create new key" -> Chọn định dạng JSON rồi tải về.\n5. Mở file JSON vừa tải về, copy giá trị của "client_email" và "private_key".\n6. Cập nhật các biến môi trường GOOGLE_CLIENT_EMAIL và GOOGLE_PRIVATE_KEY trong phần Settings của ứng dụng.\n7. Thử bấm "Đồng bộ" lại.`);
          }
 
          if (errorMsg && (errorMsg.toLowerCase().includes("file not found") || errorMsg.toLowerCase().includes("forbidden") || driveErr.status === 404 || driveErr.status === 403)) {
-           let serviceAccountEmail = "email trong file credentials.json";
-           try {
-             const credsContent = fs.readFileSync(credsPath, 'utf8');
-             const credsJson = JSON.parse(credsContent);
-             if (credsJson.client_email) {
-               serviceAccountEmail = credsJson.client_email;
-             }
-           } catch { /* ignore */ }
+           const serviceAccountEmail = process.env.GOOGLE_CLIENT_EMAIL || "email của bạn";
            
            throw new Error(`BẠN CHƯA CẤP QUYỀN TRUY CẬP cho file/sheet này.\n\nHÃY LÀM THEO CÁC BƯỚC SAU:\n1. Mở file/thư mục trên Google Drive.\n2. Bấm nút "Share" (Chia sẻ).\n3. Copy và dán email sau vào ô người nhận:\n👉 ${serviceAccountEmail}\n4. Chọn quyền "Viewer" (Người xem) và bấm "Send" (Gửi).`);
          }
@@ -309,30 +289,19 @@ app.post("/api/gs-export", async (req, res) => {
 });
 
 app.get("/api/drive-folder-files", async (req, res) => {
-  let serviceAccountEmail = "email trong file credentials.json";
+  const serviceAccountEmail = process.env.GOOGLE_CLIENT_EMAIL || "email của bạn";
   try {
     const { folderId } = req.query;
     if (!folderId || typeof folderId !== "string") {
       return res.status(400).json({ error: "No folderId provided" });
     }
 
-    const credsPath = path.join(process.cwd(), "credentials.json");
-    
-    if (!fs.existsSync(credsPath)) {
-      return res.status(500).json({ 
-        error: "Không tìm thấy file credentials.json. Bạn cần tạo/upload file credentials.json (từ Google Cloud) vào thư mục gốc của phần mềm này (cột bên trái màn hình)."
-      });
-    }
-
-    const credsContent = fs.readFileSync(credsPath, 'utf8');
-    const credsJson = JSON.parse(credsContent);
-    if (credsJson.client_email) {
-      serviceAccountEmail = credsJson.client_email;
-    }
-
     const { google } = await import("googleapis");
     const auth = new google.auth.GoogleAuth({
-      keyFile: credsPath,
+      credentials: {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      },
       scopes: [
         'https://www.googleapis.com/auth/spreadsheets.readonly',
         'https://www.googleapis.com/auth/drive.readonly'
@@ -372,7 +341,7 @@ app.get("/api/drive-folder-files", async (req, res) => {
     let errorMsg = 'Lỗi khi lấy danh sách file từ Drive: ' + error.message;
     
     if (error.message && (error.message.includes('invalid_grant') || error.message.toLowerCase().includes('jwt signature'))) {
-      errorMsg = `LỖI KHÓA LIÊN KẾT GOOGLE (Invalid JWT Signature / invalid_grant)\n\nKhóa bảo mật trong file credentials.json hiện tại đã BỊ HẾT HẠN, BỊ XÓA hoặc BỊ THU HỒI trên Google Cloud Console.\n\nCÁCH KHẮC PHỤC NHANH:\n1. Truy cập vào Google Cloud Console (https://console.cloud.google.com).\n2. Vào mục IAM & Admin -> Service Accounts (Tài khoản dịch vụ).\n3. Chọn tài khoản dịch vụ của bạn (Ví dụ: ${serviceAccountEmail}).\n4. Nhấp vào tab "Keys" (Khóa), bấm "Add Key" -> "Create new key" -> Chọn định dạng JSON rồi tải về.\n5. Đổi tên file vừa tải về thành "credentials.json" (phải viết thường chính xác).\n6. Kéo thả hoặc upload đè file "credentials.json" mới này vào cột thư mục bên trái phần mềm.\n7. Thử bấm "Đồng bộ" lại.`;
+      errorMsg = `LỖI KHÓA LIÊN KẾT GOOGLE (Invalid JWT Signature / invalid_grant)\n\nKhóa bảo mật trong biến môi trường hiện tại đã BỊ HẾT HẠN, BỊ XÓA hoặc BỊ THU HỒI trên Google Cloud Console.\n\nCÁCH KHẮC PHỤC NHANH:\n1. Truy cập vào Google Cloud Console (https://console.cloud.google.com).\n2. Vào mục IAM & Admin -> Service Accounts (Tài khoản dịch vụ).\n3. Chọn tài khoản dịch vụ của bạn (Ví dụ: ${serviceAccountEmail}).\n4. Nhấp vào tab "Keys" (Khóa), bấm "Add Key" -> "Create new key" -> Chọn định dạng JSON rồi tải về.\n5. Mở file JSON vừa tải về, copy giá trị của "client_email" và "private_key".\n6. Cập nhật các biến môi trường GOOGLE_CLIENT_EMAIL và GOOGLE_PRIVATE_KEY trong phần Settings của ứng dụng.\n7. Thử bấm "Đồng bộ" lại.`;
     } else if (error.message && error.message.toLowerCase().includes('file not found')) {
       errorMsg = `Không tìm thấy thư mục trên Google Drive.\n\nLÝ DO PHỔ BIẾN:\n1. Link/ID thư mục không chính xác.\n2. BẠN CHƯA CẤP QUYỀN TRUY CẬP: Bạn phải vào Google Drive, bấm Share (Chia sẻ) thư mục đó cho email sau với quyền Viewer (Người xem):\n👉 ${serviceAccountEmail}`;
     }

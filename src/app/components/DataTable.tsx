@@ -234,8 +234,8 @@ const ColumnFilter = ({
         <button
           className={`flex items-center justify-center w-3.5 h-3.5 rounded transition-all shrink-0 bg-transparent ${
             currentFilters && currentFilters.size !== uniqueValues.length
-              ? "text-rose-500 hover:text-rose-600 scale-110 font-bold"
-              : "text-slate-400 hover:text-rose-500"
+              ? "text-accent hover:text-accent/80 scale-110 font-bold"
+              : "text-slate-400 hover:text-accent"
           }`}
           onClick={(e) => {
             e.stopPropagation();
@@ -406,7 +406,7 @@ const DataRow = React.memo(
         {isSelected && (
           <td className="p-0 border-0" colSpan={999}>
             <div
-              className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize z-50 hover:bg-rose-400 transition-colors"
+              className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize z-50 hover:bg-accent/40 transition-colors"
               onMouseDown={(e) => {
                 e.stopPropagation();
                 setIsResizing(true);
@@ -432,19 +432,19 @@ const DataRow = React.memo(
         {selectable && (
           <td
             onClick={() => toggleRow(rowId)}
-            className={`text-rose-400 whitespace-nowrap border-b border-r ${borderClass || "border-[#E2E8F0]"} ${isSelected ? "bg-rose-50" : ""}`}
+            className={`text-accent whitespace-nowrap border-b border-r ${borderClass || "border-[#E2E8F0]"} ${isSelected ? "bg-accent/10" : ""}`}
             style={{
               padding: "var(--table-padding, 1rem 1.5rem)",
-              boxShadow: isRowActive ? "inset 4px 0 0 #F08FA8" : undefined,
+              boxShadow: isRowActive ? "inset 4px 0 0 theme(colors.accent.DEFAULT/0.4)" : undefined,
             }}
           >
             <div className="flex items-center justify-center">
               {isSelected ? (
-                <div className="w-5 h-5 bg-[#F08FA8] rounded-md flex items-center justify-center border border-[#F08FA8] shadow-sm transition-transform active:scale-95">
+                <div className="w-5 h-5 bg-accent rounded-md flex items-center justify-center border border-accent shadow-sm transition-transform active:scale-95">
                   <CheckSquare className="w-3.5 h-3.5 text-white" />
                 </div>
               ) : (
-                <div className="w-5 h-5 border-2 border-rose-200 bg-white rounded-md hover:border-[#F08FA8]/50 transition-all" />
+                <div className="w-5 h-5 border-2 border-accent/20 bg-white rounded-md hover:border-accent/50 transition-all" />
               )}
             </div>
           </td>
@@ -481,9 +481,9 @@ const DataRow = React.memo(
               onDoubleClick={() => startEditing(rIdx, cIdx)}
               onContextMenu={(e) => handleContextMenu(e, rIdx, cIdx)}
               className={`${col.cellClassName?.includes("whitespace-pre-wrap") ? "" : "whitespace-nowrap"} select-none ${getAlignment(col)} relative 
-              ${isInRange ? "bg-rose-50/50 z-10" : ""} 
-              ${isActive ? "ring-2 ring-inset ring-[#F08FA8]/40 z-20 bg-white shadow-xl" : ""} 
-              ${isColActive && !isActive && !isInRange ? "bg-rose-50/20" : ""}
+              ${isInRange ? "bg-accent/20 z-10" : ""} 
+              ${isActive ? "ring-2 ring-inset ring-accent/40 z-20 bg-white shadow-xl" : ""} 
+              ${isColActive && !isActive && !isInRange ? "bg-accent/10" : ""}
               text-[1em] leading-[1.7] font-normal text-[#4A3E3E] border-b border-r ${borderClass || "border-[#E2E8F0]"} ${col.cellClassName || ""}
             `}
               style={{
@@ -494,7 +494,7 @@ const DataRow = React.memo(
                 minWidth: widthStyle,
                 boxShadow:
                   !selectable && isRowActive && cIdx === 0
-                    ? "inset 4px 0 0 #F08FA8"
+                    ? "inset 4px 0 0 theme(colors.accent.DEFAULT/0.4)"
                     : undefined,
               }}
             >
@@ -677,7 +677,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
     const borderClass = getBorderClass(headerClassName);
     const getBorderColorHex = (headerClass?: string) => {
       if (!headerClass) return "#E2E8F0";
-      if (headerClass.includes("border-emerald")) return "rgba(16, 185, 129, 0.2)";
+      if (headerClass.includes("border-accent")) return "rgba(var(--accent), 0.2)";
       if (headerClass.includes("border-indigo")) return "rgba(99, 102, 241, 0.2)";
       if (headerClass.includes("border-pink")) return "rgba(244, 63, 94, 0.2)";
       return "#E2E8F0";
@@ -2054,7 +2054,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
           onMouseDown={(e) => handleHeaderMouseDown(e, cIdx)}
           onMouseEnter={(e) => handleHeaderMouseEnter(e, cIdx)}
           onContextMenu={(e) => handleContextMenu(e, -1, cIdx)}
-          className={`sticky top-0 z-[110] whitespace-normal cursor-pointer select-none group border-b border-r ${borderClass} text-center ${headerClassName || "bg-[#f8fafc]"} ${col.headerClassName || ""} ${isColActive ? "bg-rose-200/50" : ""} shadow-[0_1px_0_var(--table-border-color,#E2E8F0)] text-[0.75rem] font-bold uppercase text-slate-800`}
+          className={`sticky top-0 z-[110] whitespace-normal cursor-pointer select-none group border-b border-r ${borderClass} text-center ${headerClassName || "bg-[#f8fafc]"} ${col.headerClassName || ""} ${isColActive ? "bg-accent/20" : ""} shadow-[0_1px_0_var(--table-border-color,#E2E8F0)] text-[0.75rem] font-bold uppercase text-slate-800`}
           style={{
             padding: "var(--table-padding, 0.75rem 1rem)",
             width: widthStyle,
@@ -2065,7 +2065,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
         >
           <div className="flex items-center gap-2 justify-center h-full px-2">
             <span
-              className={`transition-colors flex-1 flex flex-col md:flex-row items-center justify-center gap-1 ${col.sortable !== false ? "hover:text-rose-600 active:scale-[0.98]" : ""} ${col.headerSpanClassName || ""}`}
+              className={`transition-colors flex-1 flex flex-col md:flex-row items-center justify-center gap-1 ${col.sortable !== false ? "hover:text-accent active:scale-[0.98]" : ""} ${col.headerSpanClassName || ""}`}
               onClick={(e) => {
                 if (col.sortable !== false) {
                   e.stopPropagation();
@@ -2075,7 +2075,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
             >
               <span>{col.label}</span>
               {col.sortable !== false && sortConfig?.key === col.key && (
-                <span className="shrink-0 text-rose-500 flex items-center justify-center">
+                <span className="shrink-0 text-accent flex items-center justify-center">
                   {sortConfig.direction === "asc" ? (
                     <ChevronUp className="w-3.5 h-3.5" />
                   ) : (
@@ -2102,7 +2102,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
               className={`absolute -right-[8px] top-0 bottom-0 w-[16px] cursor-col-resize group/resizer z-[70] flex justify-center`}
             >
               <div
-                className={`w-[1px] h-full transition-colors bg-[var(--table-border-color,#E2E8F0)] group-hover/resizer:bg-rose-400 ${resizingCol?.key === col.key ? "bg-rose-500" : ""}`}
+                className={`w-[1px] h-full transition-colors bg-[var(--table-border-color,#E2E8F0)] group-hover/resizer:bg-accent/40 ${resizingCol?.key === col.key ? "bg-accent" : ""}`}
               />
             </div>
           )}
@@ -2143,7 +2143,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
           >
             {resizingLineLeft !== null && (
               <div
-                className="absolute top-0 bottom-0 w-[2px] bg-rose-500 z-[100] pointer-events-none"
+                className="absolute top-0 bottom-0 w-[2px] bg-accent z-[100] pointer-events-none"
                 style={{
                   left: resizingLineLeft,
                 }}
@@ -2218,19 +2218,19 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
                     >
                       <button
                         onClick={toggleAll}
-                        className="flex items-center justify-center hover:text-rose-600 transition-colors mx-auto"
+                        className="flex items-center justify-center hover:text-accent transition-colors mx-auto"
                       >
                         {selectedRowIds.size > 0 &&
                         selectedRowIds.size === filteredAndSortedData.length ? (
-                          <div className="w-5 h-5 bg-[#F08FA8] rounded-md flex items-center justify-center border border-[#F08FA8] shadow-sm transition-transform active:scale-95">
+                          <div className="w-5 h-5 bg-accent rounded-md flex items-center justify-center border border-accent shadow-sm transition-transform active:scale-95">
                             <CheckSquare className="w-3.5 h-3.5 text-white" />
                           </div>
                         ) : selectedRowIds.size > 0 ? (
-                          <div className="w-5 h-5 bg-rose-50 rounded-md flex items-center justify-center border border-[#F08FA8] shadow-sm transition-transform active:scale-95">
-                            <Minus className="w-3 h-3 text-[#F08FA8]" />
+                          <div className="w-5 h-5 bg-accent/10 rounded-md flex items-center justify-center border border-accent/40 shadow-sm transition-transform active:scale-95">
+                            <Minus className="w-3 h-3 text-accent" />
                           </div>
                         ) : (
-                          <div className="w-5 h-5 border-2 border-rose-200 bg-white rounded-md hover:border-[#F08FA8]/50 transition-colors" />
+                          <div className="w-5 h-5 border-2 border-accent/20 bg-white rounded-md hover:border-accent/50 transition-colors" />
                         )}
                       </button>
                     </th>
@@ -2763,9 +2763,9 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
                       closeContextMenu();
                     }
                   }}
-                  className="w-full px-3 py-2 text-left text-[0.625rem] font-black uppercase tracking-wider hover:bg-emerald-50 flex items-center gap-2.5 transition-colors group text-emerald-600 hover:text-emerald-700"
+                  className="w-full px-3 py-2 text-left text-[0.625rem] font-black uppercase tracking-wider hover:bg-accent/10 flex items-center gap-2.5 transition-colors group text-accent hover:text-accent/80"
                 >
-                  <FileText className="w-3.5 h-3.5 text-emerald-500/60 group-hover:text-emerald-600 transition-colors" />
+                  <FileText className="w-3.5 h-3.5 text-accent/60 group-hover:text-accent transition-colors" />
                   <span>Thêm dòng mới</span>
                 </button>
 

@@ -853,7 +853,7 @@ export function TimesheetHub() {
                       disabled={isSyncing}
                       className="flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
                     >
-                      <Check className="w-4 h-4 text-emerald-500" />
+                      <Check className="w-4 h-4 text-accent" />
                       <span>{isSyncing ? "Đang đồng bộ..." : "Đồng bộ Supabase"}</span>
                     </DropdownMenuItem>
 
@@ -867,9 +867,9 @@ export function TimesheetHub() {
 
                     <DropdownMenuItem
                       onSelect={handleRestoreOriginal}
-                      className="flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer text-xs font-bold text-rose-600 hover:bg-rose-50"
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer text-xs font-bold text-accent hover:bg-accent/10"
                     >
-                      <RefreshCw className="w-4 h-4 text-rose-500" />
+                      <RefreshCw className="w-4 h-4 text-accent" />
                       <span>Khôi phục ban đầu</span>
                     </DropdownMenuItem>
 
@@ -885,9 +885,9 @@ export function TimesheetHub() {
                 </DropdownMenu>
 
                 <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("open-ui-settings"))}
+                  onClick={() => setView("upload")}
                   className="p-2 rounded-xl border border-[rgba(61,57,53,0.08)] bg-white hover:bg-slate-50 text-slate-400 hover:text-[#E5A8A0] transition-all shadow-sm flex items-center justify-center cursor-pointer"
-                  title="Cài đặt Giao diện"
+                  title="Cấu hình Roster"
                 >
                   <Settings className="w-4 h-4" />
                 </button>
@@ -902,131 +902,191 @@ export function TimesheetHub() {
                   className="w-full lg:w-[220px] shrink-0 flex flex-col pr-0 lg:pr-1 h-full select-none animate-in fade-in slide-in-from-left duration-500"
                   style={{ borderRadius: '48px', borderWidth: '0px' }}
                 >
-                <div className="bg-[#FAF5EE]/80 backdrop-blur-sm p-4 rounded-[48px] border border-[#3D3935]/5 flex flex-col h-full justify-between shadow-sm">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-sans font-black text-[10px] tracking-widest text-[#3D3935]/40 uppercase">Filters</span>
-                      <button 
-                        onClick={() => setShowSidebar(false)}
-                        className="text-[#3D3935]/30 hover:text-rose-500 transition-colors cursor-pointer p-1 rounded-md"
-                        style={{ backgroundColor: '#efc9ea' }}
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </button>
-                    </div>
-                    {/* Start Date Selection */}
-                    <div className="flex flex-col gap-1 relative">
-                      <span 
-                        className="font-mono text-[8px] tracking-[0.2em] uppercase text-[#3D3935]/50 leading-none"
-                        style={{ fontWeight: 'bold', fontSize: '10px', lineHeight: '10px' }}
-                      >
-                        START DATE
-                      </span>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button className="bg-white rounded-lg px-3 py-2 border border-[rgba(61,57,53,0.08)] hover:border-[#E5A8A0] focus:outline-none transition-all w-full flex items-center justify-between cursor-pointer select-none text-[11px] font-bold text-[#3D3935]">
-                            <span>
-                              {fromDate
-                                ? format(new Date(`${fromDate}T00:00:00`), "dd/MM/yyyy")
-                                : "Chọn ngày"}
-                            </span>
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 z-[100] bg-white border border-slate-200 shadow-xl rounded-xl">
-                          <Calendar
-                            mode="single"
-                            selected={fromDate ? new Date(`${fromDate}T00:00:00`) : undefined}
-                            onSelect={(d) => {
-                              startTransition(() => {
-                                const newDate = d ? format(d, "yyyy-MM-dd") : "";
-                                setFromDate(newDate);
-                                setTargetDate("");
-                                setTargetCenter("");
-                              });
-                            }}
-                            className="p-3 pointer-events-auto bg-white"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    {/* End Date Selection */}
-                    <div className="flex flex-col gap-1 relative">
-                      <span 
-                        className="font-mono text-[8px] tracking-[0.2em] uppercase text-[#3D3935]/50 leading-none"
-                        style={{ fontWeight: 'bold', fontSize: '10px', lineHeight: '10px' }}
-                      >
-                        END DATE
-                      </span>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button className="bg-white rounded-lg px-3 py-2 border border-[rgba(61,57,53,0.08)] hover:border-[#E5A8A0] focus:outline-none transition-all w-full flex items-center justify-between cursor-pointer select-none text-[11px] font-bold text-[#3D3935]">
-                            <span>
-                              {toDate
-                                ? format(new Date(`${toDate}T00:00:00`), "dd/MM/yyyy")
-                                : "Chọn ngày"}
-                            </span>
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 z-[100] bg-white border border-slate-200 shadow-xl rounded-xl">
-                          <Calendar
-                            mode="single"
-                            selected={toDate ? new Date(`${toDate}T00:00:00`) : undefined}
-                            onSelect={(d) => {
-                              startTransition(() => {
-                                const newDate = d ? format(d, "yyyy-MM-dd") : "";
-                                setToDate(newDate);
-                                setTargetDate("");
-                                setTargetCenter("");
-                              });
-                            }}
-                            className="p-3 pointer-events-auto bg-white"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    {/* Search Term input */}
-                    <div className="flex flex-col gap-1 relative">
-                      <span 
-                        className="font-mono text-[8px] tracking-[0.2em] uppercase text-[#3D3935]/50 leading-none"
-                        style={{ fontWeight: 'bold', fontSize: '10px', lineHeight: '10px' }}
-                      >
-                        KEYWORD
-                      </span>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Tìm kiếm..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="bg-white rounded-lg pl-8 pr-2.5 py-2 border border-[rgba(61,57,53,0.08)] hover:border-[#E5A8A0] focus:border-[#E5A8A0] focus:outline-none transition-all w-full text-[11px] font-bold text-[#3D3935]"
-                        />
-                        <Search className="w-3.5 h-3.5 text-[#3D3935]/30 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        startTransition(() => {
-                          setDebouncedFromDate(fromDate);
-                          setDebouncedToDate(toDate);
-                        });
-                        toast.success("Đã cập nhật bảng dữ liệu!");
-                      }}
-                      className="w-full bg-[#3D3935] hover:bg-[#3D3935]/90 text-white font-black uppercase tracking-wider text-[10px] py-2 rounded-lg transition-all cursor-pointer font-sans shadow-sm mt-1"
+                  <div className="bg-[#FAF5EE]/80 backdrop-blur-sm p-5 pb-6 rounded-[48px] border border-[#3D3935]/5 flex flex-col h-full shadow-sm overflow-hidden">
+                    {/* Fixed Header outside scrollable content */}
+                  <div className="flex items-center justify-between mb-4 shrink-0">
+                    <span className="font-sans font-black text-[10px] tracking-widest text-[#3D3935]/40 uppercase">Filters</span>
+                    <button 
+                      onClick={() => setShowSidebar(false)}
+                      className="text-[#3D3935]/30 hover:text-accent transition-colors cursor-pointer p-1 rounded-md"
+                      style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)' }}
                     >
-                      UPDATE GRID
+                      <XCircle className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div className="flex flex-col gap-2 pt-3 border-t border-[rgba(61,57,53,0.08)] mt-auto w-full">
-                    <button
-                      onClick={handleClearFilters}
-                      className="text-[9px] font-mono tracking-[0.2em] text-[#3D3935]/50 hover:text-[#E5A8A0] text-center transition-colors cursor-pointer select-none block uppercase"
-                    >
-                      RESET DEFAULTS
-                    </button>
+                  {/* Scrollable Container for all Filters controls */}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar pr-1.5 flex flex-col justify-between min-h-0 gap-6">
+                    <div className="flex flex-col gap-4">
+                      {/* Month Quick Select */}
+                      <div className="flex flex-col gap-1 relative mb-2">
+                        <span 
+                          className="font-mono text-[8px] tracking-[0.2em] uppercase text-[#3D3935]/50 leading-none"
+                          style={{ fontWeight: 'bold', fontSize: '10px', lineHeight: '10px' }}
+                        >
+                          SELECT MONTH
+                        </span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="bg-white/80 hover:bg-white rounded-lg px-3 py-2 border border-accent/20 hover:border-accent/40 focus:outline-none transition-all w-full flex items-center justify-between cursor-pointer select-none text-[11px] font-black text-[#3D3935] shadow-sm">
+                              <span>
+                                {fromDate && toDate 
+                                  ? `Chu kỳ ${format(new Date(`${toDate}T00:00:00`), "MM/yyyy")}` 
+                                  : "Chọn chu kỳ tháng"}
+                              </span>
+                              <ChevronDown className="w-3 h-3 text-[#3D3935]/50" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-[200px] bg-white border-accent/20 shadow-xl rounded-xl p-1 z-[110]">
+                            <div className="grid grid-cols-3 gap-1 p-1">
+                              {Array.from({ length: 12 }, (_, i) => {
+                                const month = i + 1;
+                                const currentYear = new Date().getFullYear();
+                                return (
+                                  <button
+                                    key={month}
+                                    onClick={() => {
+                                      const year = currentYear;
+                                      const prevMonth = month === 1 ? 12 : month - 1;
+                                      const prevYear = month === 1 ? year - 1 : year;
+                                      
+                                      const start = `${prevYear}-${String(prevMonth).padStart(2, '0')}-21`;
+                                      const end = `${year}-${String(month).padStart(2, '0')}-20`;
+                                      
+                                      startTransition(() => {
+                                        setFromDate(start);
+                                        setToDate(end);
+                                        setTargetDate("");
+                                        setTargetCenter("");
+                                      });
+                                    }}
+                                    className="py-2 text-[10px] font-bold rounded-lg hover:bg-accent/10 text-accent hover:text-accent/80 transition-colors"
+                                  >
+                                    Th{month}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      {/* Start Date Selection */}
+                      <div className="flex flex-col gap-1 relative">
+                        <span 
+                          className="font-mono text-[8px] tracking-[0.2em] uppercase text-[#3D3935]/50 leading-none"
+                          style={{ fontWeight: 'bold', fontSize: '10px', lineHeight: '10px' }}
+                        >
+                          START DATE
+                        </span>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="bg-white rounded-lg px-3 py-2 border border-[rgba(61,57,53,0.08)] hover:border-[#E5A8A0] focus:outline-none transition-all w-full flex items-center justify-between cursor-pointer select-none text-[11px] font-bold text-[#3D3935]">
+                              <span>
+                                {fromDate
+                                  ? format(new Date(`${fromDate}T00:00:00`), "dd/MM/yyyy")
+                                  : "Chọn ngày"}
+                              </span>
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0 z-[100] bg-white border border-slate-200 shadow-xl rounded-xl">
+                            <Calendar
+                              mode="single"
+                              selected={fromDate ? new Date(`${fromDate}T00:00:00`) : undefined}
+                              defaultMonth={fromDate ? new Date(`${fromDate}T00:00:00`) : undefined}
+                              onSelect={(d) => {
+                                startTransition(() => {
+                                  const newDate = d ? format(d, "yyyy-MM-dd") : "";
+                                  setFromDate(newDate);
+                                  setTargetDate("");
+                                  setTargetCenter("");
+                                });
+                              }}
+                              className="p-3 pointer-events-auto bg-white"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      {/* End Date Selection */}
+                      <div className="flex flex-col gap-1 relative">
+                        <span 
+                          className="font-mono text-[8px] tracking-[0.2em] uppercase text-[#3D3935]/50 leading-none"
+                          style={{ fontWeight: 'bold', fontSize: '10px', lineHeight: '10px' }}
+                        >
+                          END DATE
+                        </span>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="bg-white rounded-lg px-3 py-2 border border-[rgba(61,57,53,0.08)] hover:border-[#E5A8A0] focus:outline-none transition-all w-full flex items-center justify-between cursor-pointer select-none text-[11px] font-bold text-[#3D3935]">
+                              <span>
+                                {toDate
+                                  ? format(new Date(`${toDate}T00:00:00`), "dd/MM/yyyy")
+                                  : "Chọn ngày"}
+                              </span>
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0 z-[100] bg-white border border-slate-200 shadow-xl rounded-xl">
+                            <Calendar
+                              mode="single"
+                              selected={toDate ? new Date(`${toDate}T00:00:00`) : undefined}
+                              defaultMonth={toDate ? new Date(`${toDate}T00:00:00`) : undefined}
+                              onSelect={(d) => {
+                                startTransition(() => {
+                                  const newDate = d ? format(d, "yyyy-MM-dd") : "";
+                                  setToDate(newDate);
+                                  setTargetDate("");
+                                  setTargetCenter("");
+                                });
+                              }}
+                              className="p-3 pointer-events-auto bg-white"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      {/* Search Term input */}
+                      <div className="flex flex-col gap-1 relative">
+                        <span 
+                          className="font-mono text-[8px] tracking-[0.2em] uppercase text-[#3D3935]/50 leading-none"
+                          style={{ fontWeight: 'bold', fontSize: '10px', lineHeight: '10px' }}
+                        >
+                          KEYWORD
+                        </span>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Tìm kiếm..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-white rounded-lg pl-8 pr-2.5 py-2 border border-[rgba(61,57,53,0.08)] hover:border-[#E5A8A0] focus:border-[#E5A8A0] focus:outline-none transition-all w-full text-[11px] font-bold text-[#3D3935]"
+                          />
+                          <Search className="w-3.5 h-3.5 text-[#3D3935]/30 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          startTransition(() => {
+                            setDebouncedFromDate(fromDate);
+                            setDebouncedToDate(toDate);
+                          });
+                          toast.success("Đã cập nhật bảng dữ liệu!");
+                        }}
+                        className="w-full bg-[#3D3935] hover:bg-[#3D3935]/90 text-white font-black uppercase tracking-wider text-[10px] py-2 rounded-lg transition-all cursor-pointer font-sans shadow-sm mt-1"
+                      >
+                        UPDATE GRID
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-2 pt-3 border-t border-[rgba(61,57,53,0.08)] mt-auto w-full shrink-0">
+                      <button
+                        onClick={handleClearFilters}
+                        className="text-[9px] font-mono tracking-[0.2em] text-[#3D3935]/50 hover:text-[#E5A8A0] text-center transition-colors cursor-pointer select-none block uppercase"
+                      >
+                        RESET DEFAULTS
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1064,7 +1124,7 @@ export function TimesheetHub() {
                       {searchTerm && searchData.length === 0 && (
                         <div className="absolute inset-0 z-[100] flex items-center justify-center bg-white/85 backdrop-blur-sm animate-in fade-in duration-300 rounded-[32px] overflow-hidden">
                           <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl flex flex-col items-center text-center max-w-sm">
-                            <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mb-4 border border-rose-100 text-rose-500 shadow-inner">
+                            <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-4 border border-accent/20 text-accent shadow-inner">
                               <XCircle className="w-8 h-8" />
                             </div>
                             <h3 
@@ -1090,9 +1150,9 @@ export function TimesheetHub() {
                       {isCalculating || isPending ? (
                         <div className="flex-1 flex flex-col items-center justify-center bg-white/60 relative z-10 p-12">
                           <div className="relative">
-                            <div className="w-12 h-12 border-3 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
+                            <div className="w-12 h-12 border-3 border-accent/20 border-t-accent rounded-full animate-spin" />
                           </div>
-                          <p className="mt-6 text-[10px] font-black uppercase tracking-[0.25em] text-rose-500/80 animate-pulse font-sans">
+                          <p className="mt-6 text-[10px] font-black uppercase tracking-[0.25em] text-accent/80 animate-pulse font-sans">
                             {isPending
                               ? "Đang chuyển bảng..."
                               : `Đang xử lý ${appData.Q_Roster?.length || 0} dòng dữ liệu...`}

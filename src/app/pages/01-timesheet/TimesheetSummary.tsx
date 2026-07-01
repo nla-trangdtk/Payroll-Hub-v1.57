@@ -10,7 +10,6 @@ import {
   Save,
   Copy,
   Plus,
-  AlertCircle,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
@@ -914,11 +913,11 @@ export default function TimesheetSummaryPage({
         onChange={handleUploadFileA}
       />
 
-      <div className="bg-white soft-card force-light flex-1 flex flex-col min-h-0 w-full relative overflow-hidden rounded-[54px] border border-rose-100 shadow-sm">
-        <div className="absolute inset-0 bg-pattern-rose opacity-[0.05] pointer-events-none hidden" />
+      <div className="bg-white soft-card force-light flex-1 flex flex-col min-h-0 w-full relative overflow-hidden rounded-[54px] border border-accent/10 shadow-sm">
+        <div className="absolute inset-0 bg-accent/5 opacity-[0.05] pointer-events-none hidden" />
 
-        <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-6 bg-rose-50/10 shrink-0 border-none relative z-10 overflow-hidden rounded-t-[54px] rounded-b-none">
-          <div className="absolute inset-0 bg-pattern-rose opacity-[0.03] pointer-events-none rounded-t-[54px] rounded-b-none" />
+        <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-6 bg-accent/5 shrink-0 border-none relative z-10 overflow-hidden rounded-t-[54px] rounded-b-none">
+          <div className="absolute inset-0 bg-accent/5 opacity-[0.03] pointer-events-none rounded-t-[54px] rounded-b-none" />
           {computedData?.error && (
             <div className="absolute top-0 left-0 right-0 bg-red-100 text-red-600 p-2 text-center text-xs font-bold z-50">
               WORKER ERROR: {computedData.error}
@@ -952,7 +951,7 @@ export default function TimesheetSummaryPage({
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <h2 className="text-3xl font-normal font-serif text-[#3D3935] tracking-tight flex items-end gap-1" style={{ fontSize: "25px", paddingTop: "0px", paddingBottom: "0px" }}>
                   Data{" "}
-                  <span className="not-italic font-script text-rose-500 text-4xl lowercase inline-block transform -translate-y-0.5" style={{ lineHeight: "33px" }}>
+                  <span className="not-italic font-script text-accent text-4xl lowercase inline-block transform -translate-y-0.5" style={{ lineHeight: "33px" }}>
                     Summary
                   </span>
                   <span className="text-3xl font-normal font-serif text-[#3D3935] tracking-tight ml-1" style={{ lineHeight: "33px" }}>
@@ -965,12 +964,12 @@ export default function TimesheetSummaryPage({
                   <span className="font-extrabold text-slate-800 text-[13px]">{inputRows.length || 0}</span>{" "}
                   <span className="text-[10px] text-slate-500 lowercase">centers</span>
                 </span>
-                <span className="text-rose-200 font-normal">•</span>
+                <span className="text-accent/30 font-normal">•</span>
                 <span className="flex items-center gap-1">
                   <span className="font-extrabold text-slate-800 text-[13px]">{computedData?.employeeSummary?.length || 0}</span>{" "}
                   <span className="text-[10px] text-slate-500 lowercase">employees</span>
                 </span>
-                <span className="text-rose-200 font-normal">•</span>
+                <span className="text-accent/30 font-normal">•</span>
                 <span className="flex items-center gap-1">
                   <span className="font-extrabold text-slate-800 text-[13px]">{(computedData?.processedRosterData?.length || 0).toLocaleString()}</span>{" "}
                   <span className="text-[10px] text-slate-500 lowercase">records</span>
@@ -979,22 +978,7 @@ export default function TimesheetSummaryPage({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleSyncAll}
-              disabled={isCalculating || isFetchingGgSheet}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[#3D3935] hover:bg-[#3D3935]/90 text-white text-[10px] font-black uppercase tracking-widest rounded-full transition-all shadow-md hover:shadow-lg active:scale-95 disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${(isCalculating || isFetchingGgSheet) ? 'animate-spin' : ''}`} />
-              Sync All
-            </button>
-            <button
-              onClick={handleAddRow}
-              className="w-11 h-11 flex items-center justify-center rounded-full border border-border bg-white text-muted-foreground hover:text-[#E5A8A0] transition-all group shadow-sm z-10 relative"
-              title="Thêm dòng trung tâm"
-            >
-              <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            </button>
+          <div className="flex items-center gap-3">
             {onBack && (
               <button
                 onClick={onBack}
@@ -1012,7 +996,7 @@ export default function TimesheetSummaryPage({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex w-11 h-11 items-center justify-center rounded-full border border-border bg-white text-muted-foreground hover:text-primary transition-all group shadow-sm z-10 relative">
+                      <button className="flex w-11 h-11 items-center justify-center rounded-full border border-border bg-[#3D3935] text-white hover:bg-[#3D3935]/90 transition-all group shadow-sm z-10 relative">
                         <Settings className="w-5 h-5 group-hover:rotate-45 transition-transform duration-500" />
                       </button>
                     </DropdownMenuTrigger>
@@ -1027,12 +1011,32 @@ export default function TimesheetSummaryPage({
                     Tiện ích
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-border/50 mx-1" />
+                  
+                  <DropdownMenuItem
+                    onSelect={handleSyncAll}
+                    disabled={isCalculating || isFetchingGgSheet}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors font-bold text-[0.6875rem] uppercase tracking-wider"
+                  >
+                    <RefreshCw className={`w-4 h-4 text-[#E5A8A0] ${(isCalculating || isFetchingGgSheet) ? 'animate-spin' : ''}`} />
+                    <span>Sync All Data</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onSelect={handleAddRow}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-accent/10 transition-colors font-bold text-[0.6875rem] uppercase tracking-wider"
+                  >
+                    <Plus className="w-4 h-4 text-accent" />
+                    <span>Thêm dòng trung tâm</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="bg-border/50 mx-1" />
+
                   <DropdownMenuItem
                     onSelect={handleClearAll}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-rose-50 transition-colors text-rose-500"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-accent/10 transition-colors text-accent"
                   >
-                    <Trash2 className="w-4 h-4 text-rose-500" />
-                    <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-rose-500">
+                    <Trash2 className="w-4 h-4 text-accent" />
+                    <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-accent">
                       Xóa toàn bộ
                     </span>
                   </DropdownMenuItem>
@@ -1064,8 +1068,8 @@ export default function TimesheetSummaryPage({
                     onSelect={handleSaveData}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors"
                   >
-                    <Save className="w-4 h-4 text-emerald-600" />
-                    <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-emerald-600">
+                    <Save className="w-4 h-4 text-accent" />
+                    <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-accent">
                       Lưu dữ liệu
                     </span>
                   </DropdownMenuItem>
@@ -1084,36 +1088,8 @@ export default function TimesheetSummaryPage({
           </div>
         </div>
         
-        {/* Service Account Info Card */}
-        <div className="bg-rose-50/50 border-b border-rose-100 p-4 animate-in fade-in slide-in-from-top duration-500">
-          <div className="flex items-start gap-4 max-w-4xl mx-auto">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-rose-100 shadow-sm shrink-0 mt-1">
-              <AlertCircle className="w-5 h-5 text-rose-500" />
-            </div>
-            <div className="flex-1">
-              <h4 className="text-[12px] font-black text-rose-900 uppercase tracking-wider mb-1">
-                Google Sheets Permission
-              </h4>
-              <p className="text-[11px] text-rose-700/70 font-medium leading-relaxed mb-2">
-                Để hệ thống đọc được Google Sheet, hãy <strong>Chia sẻ quyền Xem (Viewer)</strong> cho email:
-              </p>
-              <div className="bg-white/80 border border-rose-200 rounded-lg p-2 px-3 flex items-center justify-between group max-w-lg">
-                <code className="text-[11px] font-mono font-bold text-rose-600 select-all truncate">
-                  sheet-reader-bot@client-sheet-app.iam.gserviceaccount.com
-                </code>
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText("sheet-reader-bot@client-sheet-app.iam.gserviceaccount.com");
-                    toast.success("Đã copy email!");
-                  }}
-                  className="p-1 hover:bg-rose-50 text-rose-400 hover:text-rose-600 rounded transition-colors cursor-pointer ml-2"
-                >
-                  <Copy className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Service Account Info Card removed as requested */}
+
 
         <div className="flex-1 flex flex-col min-h-0 relative rounded-b-[54px] overflow-hidden">
           <TimesheetInputTable

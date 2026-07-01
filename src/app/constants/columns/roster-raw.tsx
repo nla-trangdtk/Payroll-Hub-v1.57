@@ -36,7 +36,7 @@ export const ROSTER_RAW_COLUMNS = [
       if (!val) return null;
       const isOverlap = val === "Trùng lịch";
       return (
-        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest ${isOverlap ? "bg-rose-100 text-rose-600 border border-rose-200" : "bg-emerald-100 text-emerald-600 border border-emerald-200"}`}>
+        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest ${isOverlap ? "bg-accent/20 text-accent border border-accent/30" : "bg-accent/10 text-accent border border-accent/20"}`}>
           {val}
         </span>
       );

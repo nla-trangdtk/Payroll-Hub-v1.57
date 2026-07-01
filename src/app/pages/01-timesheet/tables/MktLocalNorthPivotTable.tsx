@@ -48,8 +48,8 @@ export const MktLocalNorthPivotTable: React.FC<MktLocalNorthPivotTableProps> = (
           </div>
           <div className="flex flex-col items-end border-l border-slate-200 pl-6">
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">TỔNG PHÍ</span>
-            <div className="bg-rose-50 px-2.5 py-0.5 rounded-lg border border-rose-100">
-                <span className="text-sm font-black text-rose-600 tracking-tight">{formatMoneyVND(grandTotals.grandTotal)}</span>
+            <div className="bg-accent/10 px-2.5 py-0.5 rounded-lg border border-accent/20">
+                <span className="text-sm font-black text-accent tracking-tight">{formatMoneyVND(grandTotals.grandTotal)}</span>
             </div>
           </div>
         </div>
@@ -96,16 +96,16 @@ export const MktLocalNorthPivotTable: React.FC<MktLocalNorthPivotTableProps> = (
             ))}
           </tbody>
           <tfoot className="sticky bottom-0 z-20">
-            <tr className="bg-rose-50/90 backdrop-blur font-black uppercase tracking-widest text-[11px] border-t-2 border-rose-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-              <td colSpan={2} className="px-6 py-4 text-rose-800 border border-rose-200">
+            <tr className="bg-accent/10 backdrop-blur font-black uppercase tracking-widest text-[11px] border-t-2 border-accent/30 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+              <td colSpan={2} className="px-6 py-4 text-accent border border-accent/20">
                 TỔNG CỘNG / GRAND TOTAL
               </td>
               {types.map((type) => (
-                <td key={type} className="px-4 py-4 text-right text-rose-700 border border-rose-200">
+                <td key={type} className="px-4 py-4 text-right text-accent border border-accent/20">
                   {formatMoneyVND(grandTotals.totals[type] || 0)}
                 </td>
               ))}
-              <td className="px-4 py-4 text-right text-rose-900 underline decoration-rose-300 decoration-2 underline-offset-4 border border-rose-200">
+              <td className="px-4 py-4 text-right text-accent underline decoration-accent/30 decoration-2 underline-offset-4 border border-accent/20">
                 {formatMoneyVND(grandTotals.grandTotal)}
               </td>
             </tr>
