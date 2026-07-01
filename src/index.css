@@ -1,0 +1,541 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Space+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Outfit:wght@300..900&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@300..800&family=Inter:wght@300..900&family=Yellowtail&family=Fredoka:wght@600;700;900&family=Lilita+One&family=Waterfall&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-main: "Nunito", sans-serif;
+  --font-display: "Cormorant Garamond", serif;
+  --font-script: "Yellowtail", cursive;
+  --font-chunky: "Lilita One", sans-serif;
+  --font-mono: "Space Mono", monospace;
+  --font-waterfall: "Waterfall", cursive;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Font Families */
+  --font-nunito: "Nunito", sans-serif;
+  --font-cormorant: "Cormorant Garamond", serif;
+  --font-spacemono: "Space Mono", monospace;
+  --font-quicksand: "Quicksand", sans-serif;
+  --font-inter: "Inter", sans-serif;
+  --font-montserrat: "Montserrat", sans-serif;
+  --font-playfair: "Playfair Display", serif;
+  --font-outfit: "Outfit", sans-serif;
+  --font-mono: "Space Mono", monospace;
+  --font-space: "Space Grotesk", sans-serif;
+  --font-roboto: "Roboto", sans-serif;
+  --font-fredoka: "Fredoka", sans-serif;
+  --font-lilita: "Lilita One", sans-serif;
+
+  --font-main: var(--font-nunito);
+  --font-display: var(--font-cormorant);
+  --custom-font-size: 13px;
+  --font-weight-bold: 600;
+  --tracking-tight: 0.02em;
+
+  /* Editorial Softness Palette */
+  --background: #FDFBFA; /* Soft ivory */
+  --foreground: #3D3935; /* Warm charcoal ink */
+  --card: #ffffff;
+  --card-foreground: #3D3935;
+  --primary: #E5A8A0; /* Dusty rose/accent */
+  --primary-foreground: #ffffff;
+  --secondary: #E1F1F8; /* Soft sky color */
+  --secondary-foreground: #3D3935;
+  --accent: #E5A8A0; /* Dusty rose */
+  --accent-foreground: #ffffff;
+  --popover: #ffffff;
+  --popover-foreground: #3D3935;
+  --muted: #E1F1F8;
+  --muted-foreground: rgba(61, 57, 53, 0.6); /* --ink-medium */
+  --border: rgba(61, 57, 53, 0.08); /* --ink-faint */
+  --ring: #E5A8A0;
+  --radius: 1.25rem;
+
+  --stripe-color1: #ffffff;
+  --stripe-color2: #ffffff;
+
+  --pattern-stripes-purple: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(79, 70, 229, 0.05) 10px,
+    rgba(79, 70, 229, 0.05) 20px
+  );
+  --pattern-stripes-green: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(34, 197, 94, 0.05) 10px,
+    rgba(34, 197, 94, 0.05) 20px
+  );
+  --pattern-stripes-brown: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(15, 23, 42, 0.03) 10px,
+    rgba(15, 23, 42, 0.03) 20px
+  );
+  --pattern-stripes-rose: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(206, 159, 169, 0.05) 10px,
+    rgba(206, 159, 169, 0.05) 20px
+  );
+}
+
+.bg-pattern-purple { background-image: var(--pattern-stripes-purple) !important; }
+.bg-pattern-green { background-image: var(--pattern-stripes-green) !important; }
+.bg-pattern-brown { background-image: var(--pattern-stripes-brown) !important; }
+.bg-pattern-rose { background-image: var(--pattern-stripes-rose) !important; }
+
+.dark {
+  --background: #5d111a;
+  --foreground: #f6f4f0;
+  --card: #4a0e15;
+  --card-foreground: #f6f4f0;
+  --popover: #4a0e15;
+  --popover-foreground: #f6f4f0;
+  --primary: #c88493;
+  --primary-foreground: #ffffff;
+  --secondary: #a5b889;
+  --secondary-foreground: #5d111a;
+  --muted: #4a0e15;
+  --muted-foreground: #c88493;
+  --accent: #f2cfd5;
+  --accent-foreground: #5d111a;
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: rgba(246, 244, 240, 0.15);
+  --input: rgba(246, 244, 240, 0.15);
+  --ring: #c88493;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --stripe-color1: #5d111a;
+  --stripe-color2: #4a0e15;
+}
+
+@theme {
+  --font-sans: var(--font-main);
+  --font-serif: var(--font-display);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 3rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-weight: 500;
+    letter-spacing: var(--tracking-tight, 0.02em);
+    background-attachment: fixed;
+    position: relative;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background: radial-gradient(circle at 10% 20%, rgba(225, 241, 248, 0.45) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(229, 168, 160, 0.18) 0%, transparent 50%),
+                #FDFBFA;
+    pointer-events: none;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: var(--bg-image);
+    background-size: var(--bg-image-size, cover);
+    background-repeat: var(--bg-image-repeat, no-repeat);
+    background-position: var(--bg-image-position, center);
+    background-attachment: var(--bg-image-attachment, fixed);
+    opacity: var(--bg-image-opacity, 0);
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-foreground tracking-tight;
+    text-shadow: 
+      -1px -1px 1px rgba(255, 255, 255, 0.95), 
+      1.5px 1.5px 2.5px rgba(45, 25, 18, 0.16);
+  }
+
+  .dark h1,
+  .dark h2,
+  .dark h3,
+  .dark h4 {
+    text-shadow: 
+      -1px -1px 1.5px rgba(255, 255, 255, 0.12), 
+      1.5px 1.5px 3px rgba(0, 0, 0, 0.55);
+  }
+
+  h1 {
+    @apply font-[700] leading-tight;
+  }
+
+  h2 {
+    @apply font-[700] tracking-[-0.01em] leading-tight;
+  }
+
+  .decorative-text {
+    @apply font-display font-[500] uppercase tracking-[0.1em];
+  }
+
+  html {
+    font-size: 16px;
+    font-family: var(--font-main);
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--primary) 50%, transparent)
+      transparent;
+  }
+
+  /* Force Table Font consistently */
+  table,
+  table th,
+  table td,
+  table input,
+  table select,
+  table textarea,
+  .table-font {
+    font-family: var(--font-table, var(--font-main)) !important;
+  }
+
+  table {
+    font-size: 100%;
+  }
+
+  th,
+  td {
+    font-size: var(--custom-font-size, 13px);
+    padding: var(--table-padding, 12px 16px);
+  }
+
+  td {
+    white-space: nowrap;
+  }
+
+  /* Custom Scrollbar Styles */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(61, 57, 53, 0.03);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(61, 57, 53, 0.28);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(61, 57, 53, 0.48);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(61, 57, 53, 0.05);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--primary) 70%, transparent);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--primary) 90%, transparent);
+  }
+
+  /* Compatibility Fixes for older Safari/iOS */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
+    font-family: inherit; /* Inherit from td or body */
+  }
+
+  .sticky {
+    position: -webkit-sticky;
+    position: sticky;
+  }
+
+  /* Global backdrop-filter prefixing support */
+  [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: blur(var(--blur-amount, 8px));
+  }
+
+  /* Navigation Elevation */
+  .nav-elevation {
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.03);
+    border-right: 2px solid var(--border);
+  }
+}
+
+@utility soft-card {
+  @apply bg-white border border-border rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-slate-900;
+}
+
+@layer utilities {
+  .data-table-wrapper {
+    background-color: #ffffff;
+    border-radius: 1.5rem;
+    overflow: hidden;
+  }
+
+  th.sticky {
+    background-color: var(--table-header-bg, #f4efe2) !important;
+    z-index: 60;
+  }
+
+  tr.total-row,
+  tr.total-row td {
+    background-color: var(--table-header-bg, #f4efe2) !important;
+  }
+}
+
+
+
+@utility soft-button {
+  @apply rounded-full px-6 py-2.5 font-medium transition-all duration-300;
+}
+
+@utility scallop-border {
+  background-image: radial-gradient(
+    circle at 10px 10px,
+    transparent 10px,
+    white 10.5px
+  );
+  background-size: 20px 20px;
+}
+
+@utility gingham-pattern {
+  background-color: transparent;
+  background-image:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--primary) 8%, transparent) 50%,
+      transparent 50%
+    ),
+    linear-gradient(
+      color-mix(in srgb, var(--primary) 8%, transparent) 50%,
+      transparent 50%
+    );
+  background-size: 40px 40px;
+}
+
+@utility striped-pattern {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent, #a8e4f0) 15%, transparent) 50%,
+    transparent 50%
+  );
+  background-size: 48px 100%;
+}
+
+@utility striped-pattern-sage {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 15%, transparent) 50%,
+    transparent 50%
+  );
+  background-size: 40px 100%;
+}
+
+@utility vintage-card {
+  @apply bg-white border border-border rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)];
+}
+
+@utility vintage-button {
+  @apply rounded-full px-6 py-2.5 font-medium transition-all duration-300 bg-primary text-white hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5;
+}
+
+@utility vintage-button-icon {
+  @apply rounded-full w-10 h-10 flex items-center justify-center bg-white border border-border text-primary hover:bg-primary hover:text-white transition-all;
+}
+
+@utility vintage-header {
+  @apply px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 bg-muted/30 border-b border-border;
+}
+
+@utility vintage-input {
+  @apply flex items-center bg-white border border-border rounded-full px-4 py-2 text-sm focus-within:ring-2 focus-within:ring-primary/20;
+}
+
+@utility vintage-dropdown {
+  @apply absolute bg-white border border-border rounded-2xl shadow-xl z-50 overflow-hidden;
+}
+
+@utility text-embossed {
+  text-shadow: 
+    -1px -1px 1px rgba(255, 255, 255, 0.95), 
+    1.5px 1.5px 2.5px rgba(45, 25, 18, 0.16);
+}
+
+@utility text-embossed-paper {
+  color: #f7f4ec !important;
+  text-shadow: 
+    -1.5px -1.5px 2px rgba(255, 255, 255, 1), 
+    1.5px 1.5px 3px rgba(45, 25, 18, 0.16);
+}
+
+.dark .text-embossed-paper {
+  color: #5d111a !important;
+  text-shadow: 
+    -1.5px -1.5px 2px rgba(255, 255, 255, 0.12), 
+    1.5px 1.5px 3.5px rgba(0, 0, 0, 0.6);
+}
+
+.data-table-wrapper {
+  background-color: var(--background) !important;
+  box-shadow: 
+    -3px -3px 8px rgba(255, 255, 255, 0.95), 
+    3px 3px 8px rgba(45, 25, 18, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+.dark .data-table-wrapper {
+  background-color: var(--card) !important;
+  box-shadow: 
+    -3px -3px 8px rgba(255, 255, 255, 0.08), 
+    3px 3px 12px rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+
+/* Custom UI Overrides from Target Selectors - Scoped to Timesheet Page */
+/* Removed problematic nth-child overrides that caused sticky header gaps */
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) {
+  border-color: #ffffff !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) {
+  padding-left: 12px !important;
+  padding-top: 12px !important;
+  padding-right: 12px !important;
+  padding-bottom: 12px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) {
+  margin-left: 20px !important;
+  margin-right: 20px !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 0px !important;
+  margin-top: 0px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) {
+  height: 53.270799999999994px !important;
+  padding-top: 0px !important;
+  padding-left: 21px !important;
+  padding-right: 21px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) {
+  height: 27.460700000000003px !important;
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  padding-right: 6px !important;
+  padding-left: 6px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > h3:nth-of-type(1) {
+  font-size: 12px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > span:nth-of-type(1),
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1),
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > span:nth-of-type(1) {
+  font-weight: bold !important;
+  font-size: 10px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button#radix-\:r1c\::nth-of-type(1) > span:nth-of-type(1) {
+  width: 164.611px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tfoot:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(1) {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > thead:nth-of-type(1) > tr:nth-of-type(1) > th:nth-of-type(1),
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > thead:nth-of-type(1) > tr:nth-of-type(1) > th:nth-of-type(2),
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > thead:nth-of-type(1) > tr:nth-of-type(1) > th:nth-of-type(3),
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > thead:nth-of-type(1) > tr:nth-of-type(1) > th:nth-of-type(4),
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > thead:nth-of-type(1) > tr:nth-of-type(1) > th:nth-of-type(5),
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > thead:nth-of-type(1) > tr:nth-of-type(1) > th:nth-of-type(6),
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > thead:nth-of-type(1) > tr:nth-of-type(1) > th:nth-of-type(7),
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > thead:nth-of-type(1) > tr:nth-of-type(1) > th:nth-of-type(8),
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > thead:nth-of-type(1) > tr:nth-of-type(1) > th:nth-of-type(9) {
+  text-align: center !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) {
+  margin-top: 0px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > table:nth-of-type(1) {
+  padding-left: 0px !important;
+  margin-left: -21px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button#radix-\:r4\::nth-of-type(1) > span:nth-of-type(1) {
+  text-align: left !important;
+  width: 182.607px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button#radix-\:r4\::nth-of-type(1) {
+  width: 250.051px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button#radix-\:r4\::nth-of-type(1) > svg:nth-of-type(2) {
+  width: 16.9954px !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(4) > td:nth-of-type(2) {
+  font-style: normal !important;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button#radix-\:r56\::nth-of-type(1) > span:nth-of-type(1) {
+  width: 160.255px !important;
+}

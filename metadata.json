@@ -1,0 +1,8 @@
+{
+  "name": "Payroll Hub v1.56",
+  "description": "lương hold của tháng tại trial balance \u003d cột nghiệp vụ bảng hold ae \u003d HOLD + sheet source chứa tháng báo cáo hiện tại + tháng báo cáo \u003d card chọn tháng chọn \u003d giá trị tại cột + cột total payment mang giá trị âm, không đưa giá trị sheet 1 ae vào cột lương hold, code bảng hold ae đang lọc giá trị tháng 11,12 năm 2025 do nhầm thành 2026",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
