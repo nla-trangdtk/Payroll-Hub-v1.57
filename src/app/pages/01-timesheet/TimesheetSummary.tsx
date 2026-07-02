@@ -899,7 +899,7 @@ export default function TimesheetSummaryPage({
   };
 
   return (
-    <div className="page-timesheet-summary flex-1 flex flex-col min-h-0 bg-transparent p-8 gap-8 items-center overflow-auto custom-scrollbar">
+    <div className="page-timesheet-summary flex-1 flex flex-col min-h-0 bg-transparent p-2 sm:p-3 md:p-4 gap-4 w-full h-full overflow-hidden">
       <button data-action="save-data" className="hidden" onClick={handleSaveData} />
       
       <input
@@ -910,11 +910,11 @@ export default function TimesheetSummaryPage({
         onChange={handleUploadFileA}
       />
 
-      <div className="bg-white soft-card force-light flex-1 flex flex-col min-h-0 w-full relative overflow-hidden rounded-[54px] border border-accent/10 shadow-sm">
+      <div className="bg-white soft-card force-light flex-1 flex flex-col min-h-0 w-full relative overflow-hidden rounded-2xl border border-accent/10 shadow-sm">
         <div className="absolute inset-0 bg-accent/5 opacity-[0.05] pointer-events-none hidden" />
 
-        <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-6 bg-accent/5 shrink-0 border-none relative z-10 overflow-hidden rounded-t-[54px] rounded-b-none">
-          <div className="absolute inset-0 bg-accent/5 opacity-[0.03] pointer-events-none rounded-t-[54px] rounded-b-none" />
+        <div className="p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 bg-accent/5 shrink-0 border-none relative z-10 overflow-hidden rounded-t-2xl rounded-b-none">
+          <div className="absolute inset-0 bg-accent/5 opacity-[0.03] pointer-events-none rounded-t-2xl rounded-b-none" />
           {computedData?.error && (
             <div className="absolute top-0 left-0 right-0 bg-red-100 text-red-600 p-2 text-center text-xs font-bold z-50">
               WORKER ERROR: {computedData.error}
@@ -946,7 +946,7 @@ export default function TimesheetSummaryPage({
 
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <h2 className="text-3xl font-normal font-serif text-[#3D3935] tracking-tight flex items-end gap-1" style={{ fontSize: "25px", paddingTop: "0px", paddingBottom: "0px" }}>
+                <h2 className="text-3xl font-normal font-serif text-[#3D3935] tracking-tight flex items-end gap-1" style={{ lineHeight: "33px" }}>
                   Data{" "}
                   <span className="not-italic font-script text-accent text-4xl lowercase inline-block transform -translate-y-0.5" style={{ lineHeight: "33px" }}>
                     Summary
@@ -1088,7 +1088,7 @@ export default function TimesheetSummaryPage({
         {/* Service Account Info Card removed as requested */}
 
 
-        <div className="flex-1 flex flex-col min-h-0 relative rounded-b-[54px] overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 relative rounded-b-2xl overflow-hidden">
           <TimesheetInputTable
             rows={inputRows}
             onAddRow={handleAddRow}

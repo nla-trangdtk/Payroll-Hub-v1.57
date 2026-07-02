@@ -1231,7 +1231,7 @@ export function TimesheetHub() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "-100%", opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="absolute inset-3 flex flex-col p-0 m-3"
+            className="absolute inset-1 flex flex-col p-0 m-1"
           >
             <TimesheetSummaryPage onBack={() => setView("final")} />
           </motion.div>

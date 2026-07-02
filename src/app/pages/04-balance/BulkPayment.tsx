@@ -674,6 +674,111 @@ export function BulkPayment({
     };
   }, [appData.Sheet1_AE.data, appData.Hold_AE.data, appData.Bank_North_AE.data, holdPaymentDetails.bankNorthT5, appData.globalMonth, isMonthInStrComp, monMatchComp, targetMonthLabelComp]);
 
+  const dynamicReportStats = useMemo(() => {
+    const currentMonthVal = appData.globalMonth || "03.2026";
+    const currentPeriodParts = currentMonthVal.split(".");
+    const currentMonthNum = parseInt(currentPeriodParts[0], 10) || 3;
+    const currentYearNum = parseInt(currentPeriodParts[1], 10) || 2026;
+
+    // I. CHI PHÍ THÁNG BÁO CÁO THEO TỪNG BU
+    const sheet1Totals: Record<string, number> = {};
+    appData.Sheet1_AE.data.forEach((r) => {
+      const rowMonthStr = String(r["Tháng báo cáo"] || r["_fileMonth"] || r["Tháng"] || r["Month"] || "").trim();
+      const extracted = monMatchComp(rowMonthStr);
+      if (extracted && extracted !== targetMonthLabelComp) return;
+      if (!extracted && rowMonthStr && !isMonthInStrComp(rowMonthStr)) return;
+
+      let biz = r["Business"] || r["BU"] || "Unknown";
+      if (biz === "AHN_HP") biz = "AHP";
+      const amount = parseMoneyToNumber(r["TOTAL PAYMENT"] || r["Payment Amount"] || r["Grand Total"] || r["GRAND TOTAL"] || r["Total Payment"] || 0);
+      sheet1Totals[biz] = (sheet1Totals[biz] || 0) + amount;
+    });
+
+    // II. SỐ TIỀN HOLD/ADD
+    const holdAddItems: { month: string; biz: string; reason: string; amount: number; type: 'HOLD' | 'ADD' | 'CANCEL' }[] = [];
+    appData.Hold_AE.data.forEach((r) => {
+      const rowMonthStr = String(r["Tháng báo cáo"] || r["_fileMonth"] || r["Tháng"] || r["Month"] || "").trim();
+      const extracted = monMatchComp(rowMonthStr);
+      if (extracted && extracted !== targetMonthLabelComp) return;
+      if (!extracted && rowMonthStr && !isMonthInStrComp(rowMonthStr)) return;
+
+      const command = String(r["Lệnh"] || "").trim().toUpperCase();
+      if (command === "-") return;
+
+      let amount = parseMoneyToNumber(r["TOTAL PAYMENT"] || r["Payment Amount"] || r["Grand Total"] || r["GRAND TOTAL"] || r["Total Payment"] || 0);
+      if (isPastMonthHold(r, currentMonthNum, currentYearNum)) {
+        amount = 0;
+      }
+
+      const nghiepVu = String(r["Nghiệp vụ"] || "").toLowerCase();
+      const trangThai = String(r["Tháng phát sinh"] || r["Trạng thái"] || "").toLowerCase();
+      const sheetSource = String(r["Sheet Source"] || "").toLowerCase();
+      const tttt = String(r["Tình trạng thanh toán"] || "").trim();
+
+      // Skip CANCEL rows
+      if (nghiepVu === "cancel" || trangThai.includes("cancel") || sheetSource.includes("cancel") || tttt.toLowerCase().includes("cancel")) {
+        return;
+      }
+
+      // Exclude values imported from 'sheet 1 ae' inside Hold AE
+      if (sheetSource.includes("sheet 1 ae") || sheetSource.includes("sheet 1")) {
+        return;
+      }
+
+      // Skip other-month active hold rows
+      if (r._dimmed) {
+        return;
+      }
+
+      if (amount !== 0) {
+        let biz = r["BU"] || r["Business"] || "Unknown";
+        if (biz === "AHN_HP") biz = "AHP";
+
+        if (biz === "Unknown" || !biz) {
+          const textToMatch = [ r["Sheet Source"], r["CENTER NOTE"], r["Mã ae"], r["Note"], r["Full name"] ]
+            .map(v => String(v || "").toUpperCase()).join(" ");
+          if (textToMatch.includes("HN") || textToMatch.includes("AHN")) biz = "AHN";
+          else if (textToMatch.includes("AHP") || textToMatch.includes("HAIPHONG")) biz = "AHP";
+          else if (textToMatch.includes("ATH") || textToMatch.includes("THANH HOA")) biz = "ATH";
+          else if (textToMatch.includes("ATN") || textToMatch.includes("THAI NGUYEN")) biz = "ATN";
+          else if (textToMatch.includes("APT") || textToMatch.includes("PHU THO")) biz = "APT";
+          else biz = "AHN";
+        }
+
+        const isAdd = r["Sheet Source"]?.toUpperCase().includes("ADD") || (!r["Sheet Source"]?.toUpperCase().includes("HOLD") && amount > 0) || nghiepVu.includes("add");
+        const itemType: 'HOLD' | 'ADD' = isAdd ? 'ADD' : 'HOLD';
+
+        holdAddItems.push({
+          month: String(r["Tháng phát sinh"] || r["Tháng báo cáo"] || r["Tháng"] || r["Month"] || "").trim(),
+          biz,
+          reason: String(r["Nghiệp vụ"] || r["Ghi chú"] || "N/A"),
+          amount: Math.abs(amount),
+          type: itemType
+        });
+      }
+    });
+
+    // III. SỐ TIỀN THANH TOÁN THEO TỪNG BU: LÀ KẾT QUẢ CỦA I + ADD - HOLD THEO TỪNG BU
+    const finalTotals: Record<string, number> = {};
+    const buList = ["AHN", "AHP", "ATH", "ATN", "APT"];
+    buList.forEach(bu => {
+      finalTotals[bu] = sheet1Totals[bu] || 0;
+    });
+
+    holdAddItems.forEach(item => {
+      if (!finalTotals[item.biz]) {
+        finalTotals[item.biz] = 0;
+      }
+      finalTotals[item.biz] += (item.type === 'ADD' ? item.amount : -item.amount);
+    });
+
+    return {
+      sheet1Totals,
+      holdAddItems,
+      finalTotals
+    };
+  }, [appData.Sheet1_AE.data, appData.Hold_AE.data, appData.globalMonth, isMonthInStrComp, monMatchComp, targetMonthLabelComp]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
@@ -1215,24 +1320,13 @@ export function BulkPayment({
 
           <div className="flex flex-col relative z-10 w-full gap-5">
             <div 
-              className="bg-muted/20 rounded-[1.5rem] border border-border flex flex-col gap-3"
-              style={{
-                paddingTop: "12px",
-                paddingLeft: "16px",
-                marginLeft: "12px",
-                marginRight: "12px",
-                marginBottom: "12px",
-                marginTop: "12px",
-                paddingRight: "21px",
-                width: "290px",
-                paddingBottom: "16px",
-              }}
+              className="bg-muted/20 rounded-[1.5rem] border border-border flex flex-col gap-3 p-4 mx-3 my-3"
             >
               <h4 className="text-[0.625rem] font-bold uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2">
                 <FileText className="w-4 h-4" /> THÔNG TIN BẢNG KÊ
               </h4>
               
-              <div className="flex flex-col gap-1.5 w-full">
+              <div className="flex flex-col gap-2.5 w-full">
                 <div className="flex justify-between items-center bg-white/50 px-2 py-1.5 rounded-lg border border-white">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tháng báo cáo</span>
                   <span className="text-xs font-bold text-primary">{appData.globalMonth || "03.2026"}</span>
@@ -1276,6 +1370,67 @@ export function BulkPayment({
                     <span className="text-[11px] font-bold text-slate-800">{formatMoneyVND(holdPaymentDetails.otherT5).replace(" ₫", "")}</span>
                   </div>
                 )}
+
+                {/* I. CHI PHÍ THÁNG BÁO CÁO THEO TỪNG BU */}
+                <div className="mt-2 pt-2.5 border-t border-slate-200/60">
+                  <h5 className="text-[0.625rem] font-bold uppercase tracking-[0.1em] text-slate-800 mb-1.5 flex items-center gap-1">
+                    <span className="text-primary">I.</span> CHI PHÍ THÁNG BÁO CÁO (SHEET 1)
+                  </h5>
+                  <div className="space-y-1">
+                    {Object.entries(dynamicReportStats.sheet1Totals).length > 0 ? (
+                      Object.entries(dynamicReportStats.sheet1Totals).map(([biz, amount]) => (
+                        <div key={biz} className="flex items-center justify-between text-[10px] py-1 px-1.5 bg-white/60 rounded border border-white/80">
+                          <span className="font-bold text-slate-600">{biz}</span>
+                          <span className="font-mono text-emerald-600 font-semibold">{formatMoneyVND(amount).replace(" ₫", "")}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-[9px] text-slate-400 italic px-1">Chưa có dữ liệu Sheet 1</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* II. SỐ TIỀN HOLD/ADD THEO TỪNG MỤC */}
+                <div className="mt-2 pt-2.5 border-t border-slate-200/60">
+                  <h5 className="text-[0.625rem] font-bold uppercase tracking-[0.1em] text-slate-800 mb-1.5 flex items-center gap-1">
+                    <span className="text-primary">II.</span> SỐ TIỀN HOLD/ADD THEO MỤC
+                  </h5>
+                  <div className="space-y-1 max-h-[160px] overflow-y-auto custom-scrollbar pr-0.5">
+                    {dynamicReportStats.holdAddItems.length > 0 ? (
+                      dynamicReportStats.holdAddItems.map((item, idx) => {
+                        const isAdd = item.type === 'ADD';
+                        return (
+                          <div key={idx} className="flex flex-col gap-0.5 text-[9px] p-1.5 bg-white/60 rounded border border-white/80">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-slate-700">{item.biz} ({item.month})</span>
+                              <span className={`font-mono font-bold ${isAdd ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                {isAdd ? '+' : '-'}{formatMoneyVND(item.amount).replace(" ₫", "")}
+                              </span>
+                            </div>
+                            <span className="text-[8px] text-slate-500 truncate" title={item.reason}>{item.reason}</span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-[9px] text-slate-400 italic px-1">Không có khoản Hold/Add nào</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* III. SỐ TIỀN THANH TOÁN THEO TỪNG BU */}
+                <div className="mt-2 pt-2.5 border-t border-slate-200/60">
+                  <h5 className="text-[0.625rem] font-bold uppercase tracking-[0.1em] text-slate-800 mb-1.5 flex items-center gap-1">
+                    <span className="text-primary">III.</span> SỐ TIỀN THANH TOÁN THEO BU
+                  </h5>
+                  <div className="space-y-1">
+                    {Object.entries(dynamicReportStats.finalTotals).map(([biz, amount]) => (
+                      <div key={biz} className="flex items-center justify-between text-[10px] py-1 px-1.5 bg-slate-100 rounded border border-slate-200/50">
+                        <span className="font-bold text-slate-700">{biz}</span>
+                        <span className="font-mono text-emerald-600 font-bold">{formatMoneyVND(amount).replace(" ₫", "")}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex flex-col gap-2 mt-2">
                   <div className="flex justify-between items-center">
@@ -1341,87 +1496,6 @@ export function BulkPayment({
               </span>
             </button>
           </div>
-
-          {/* Validation Results (now integrated inside the same card) */}
-          <AnimatePresence>
-            {reportStats && !isGenerating && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden mt-4"
-              >
-                <div className="p-5 border border-slate-200 rounded-2xl relative z-20 bg-white space-y-5">
-                  <div>
-                    <h4 className="text-[0.625rem] font-bold mb-3 uppercase flex items-center gap-2 tracking-[0.1em] text-slate-800">
-                      I. CHI PHÍ THÁNG BÁO CÁO THEO TỪNG BU
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-2">
-                      {Object.entries(reportStats.sheet1Totals).map(([biz, amount]) => (
-                        <div key={biz} className="flex items-center justify-between text-xs p-2 bg-slate-50 rounded border border-slate-100">
-                          <span className="font-bold text-slate-600">{biz}</span>
-                          <span className="font-mono text-emerald-600 font-medium">{formatMoneyVND(amount)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-[0.625rem] font-bold mb-3 uppercase flex items-center gap-2 tracking-[0.1em] text-slate-800">
-                      II. SỐ TIỀN HOLD/ADD THEO TỪNG MỤC
-                    </h4>
-                    <div className="space-y-2 pl-2">
-                      {reportStats.holdAddItems.length > 0 ? (
-                        reportStats.holdAddItems.map((item, idx) => {
-                          const icon = item.type === 'ADD' ? '☑️' : item.type === 'CANCEL' ? '©️' : '✖️';
-                          const typeLabel = item.type === 'ADD' ? 'Add' : item.type === 'CANCEL' ? 'Cancel' : 'Hold';
-                          return (
-                            <div key={idx} className="flex items-center justify-between text-xs p-2 bg-slate-50 rounded border border-slate-100">
-                              <div className="flex items-center gap-2 overflow-hidden">
-                                <span className="text-sm shrink-0" title={typeLabel}>{icon}</span>
-                                <div className="flex flex-col gap-0.5 min-w-0">
-                                  <span className="font-bold text-slate-600 truncate">{item.biz} - {item.month}</span>
-                                  <span className="text-[10px] text-slate-500 italic truncate max-w-[200px]" title={item.reason}>{item.reason}</span>
-                                </div>
-                              </div>
-                              <span className={`font-mono font-medium ${item.type === 'ADD' ? 'text-emerald-600' : item.type === 'CANCEL' ? 'text-slate-500' : 'text-rose-600'}`}>
-                                {item.type === 'ADD' ? '+' : item.type === 'CANCEL' ? '' : '-'}{formatMoneyVND(item.amount)}
-                              </span>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="text-xs text-slate-500 italic pl-2">Không có khoản Hold/Add nào trong tháng</div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-[0.625rem] font-bold mb-3 uppercase flex items-center gap-2 tracking-[0.1em] text-slate-800 border-t border-slate-100 pt-5">
-                      III. SỐ TIỀN THANH TOÁN THEO TỪNG BU
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-2">
-                      {Object.entries(reportStats.finalTotals).map(([biz, amount]) => (
-                        <div key={biz} className="flex items-center justify-between text-xs p-2 bg-slate-800 text-white rounded shadow-sm">
-                          <span className="font-bold text-slate-200">{biz}</span>
-                          <span className="font-mono text-emerald-400 font-medium">{formatMoneyVND(amount)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {!reportStats.isSuccess && reportStats.bizDiffs.length > 0 && (
-                    <div className="mt-4 p-3 bg-rose-50 border border-rose-100 rounded-lg">
-                      <h4 className="text-[10px] font-bold text-rose-600 uppercase mb-2">Sai lệch dữ liệu</h4>
-                      <ul className="text-xs text-rose-600/80 space-y-1 list-disc pl-4">
-                        {reportStats.bizDiffs.map((diff, i) => <li key={i}>{diff}</li>)}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       )}
 

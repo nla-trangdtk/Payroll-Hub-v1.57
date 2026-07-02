@@ -25,32 +25,49 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "No folderId provided" });
     }
 
-    const credsPath = path.join(process.cwd(), "credentials.json");
+    let auth;
+    const hasEnvCreds = process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY;
     
-    if (!fs.existsSync(credsPath)) {
-      return res.status(500).json({ 
-        error: "Không tìm thấy file credentials.json. Bạn cần tạo/upload file credentials.json (từ Google Cloud) vào thư mục gốc của phần mềm này (cột bên trái màn hình)."
+    if (hasEnvCreds) {
+      serviceAccountEmail = process.env.GOOGLE_CLIENT_EMAIL!;
+      auth = new google.auth.GoogleAuth({
+        credentials: {
+          client_email: process.env.GOOGLE_CLIENT_EMAIL,
+          private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        },
+        scopes: [
+          'https://www.googleapis.com/auth/spreadsheets.readonly',
+          'https://www.googleapis.com/auth/drive.readonly'
+        ],
+      });
+    } else {
+      const credsPath = path.join(process.cwd(), "credentials.json");
+      
+      if (!fs.existsSync(credsPath)) {
+        return res.status(500).json({ 
+          error: "Không tìm thấy cấu hình kết nối Google. Vui lòng thêm biến môi trường GOOGLE_CLIENT_EMAIL và GOOGLE_PRIVATE_KEY trong phần cài đặt của Vercel (hoặc upload file credentials.json vào thư mục gốc)."
+        });
+      }
+
+      let credsJson: any = {};
+      try {
+        const credsContent = fs.readFileSync(credsPath, 'utf8');
+        credsJson = JSON.parse(credsContent);
+        if (credsJson.client_email) {
+          serviceAccountEmail = credsJson.client_email;
+        }
+      } catch (err: any) {
+        console.error("Lỗi khi đọc file credentials.json:", err);
+      }
+
+      auth = new google.auth.GoogleAuth({
+        keyFile: credsPath,
+        scopes: [
+          'https://www.googleapis.com/auth/spreadsheets.readonly',
+          'https://www.googleapis.com/auth/drive.readonly'
+        ],
       });
     }
-
-    let credsJson: any = {};
-    try {
-      const credsContent = fs.readFileSync(credsPath, 'utf8');
-      credsJson = JSON.parse(credsContent);
-      if (credsJson.client_email) {
-        serviceAccountEmail = credsJson.client_email;
-      }
-    } catch (err: any) {
-      console.error("Lỗi khi đọc file credentials.json:", err);
-    }
-
-    const auth = new google.auth.GoogleAuth({
-      keyFile: credsPath,
-      scopes: [
-        'https://www.googleapis.com/auth/spreadsheets.readonly',
-        'https://www.googleapis.com/auth/drive.readonly'
-      ],
-    });
 
     const client = await auth.getClient();
     const drive = google.drive({ version: 'v3', auth: client as any });

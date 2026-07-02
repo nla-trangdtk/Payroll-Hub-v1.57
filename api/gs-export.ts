@@ -101,17 +101,31 @@ export default async function handler(req: any, res: any) {
       console.warn("[API] Public fetch exception:", err);
     }
 
-    // Fallback to credentials.json if public fetch failed or returned HTML
+    // Fallback to credentials if public fetch failed or returned HTML
     if (!responseOk) {
       const credsPath = path.join(process.cwd(), "credentials.json");
-      if (!fs.existsSync(credsPath)) {
-        throw new Error("Không thể tải Google Sheet. Vui lòng đảm bảo link đã được chia sẻ công khai hoặc thêm file credentials.json.");
+      let auth;
+      const hasEnvCreds = process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY;
+
+      if (hasEnvCreds) {
+        auth = new google.auth.GoogleAuth({
+          credentials: {
+            client_email: process.env.GOOGLE_CLIENT_EMAIL,
+            private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+          },
+          scopes: ['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/spreadsheets.readonly'],
+        });
+      } else {
+        if (!fs.existsSync(credsPath)) {
+          throw new Error("Không thể tải Google Sheet. Vui lòng thiết lập biến môi trường GOOGLE_CLIENT_EMAIL và GOOGLE_PRIVATE_KEY trên Vercel, hoặc thêm file credentials.json.");
+        }
+
+        auth = new google.auth.GoogleAuth({
+          keyFile: credsPath,
+          scopes: ['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/spreadsheets.readonly'],
+        });
       }
 
-      const auth = new google.auth.GoogleAuth({
-        keyFile: credsPath,
-        scopes: ['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/spreadsheets.readonly'],
-      });
       const client = await auth.getClient();
       const drive = google.drive({ version: 'v3', auth: client as any });
 
