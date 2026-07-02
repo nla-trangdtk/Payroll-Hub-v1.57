@@ -70,19 +70,19 @@ export function Navbar({ onToggleMobileMenu, onOpenSettings }: NavbarProps) {
           <Menu className="w-5 h-5" />
         </button>
         
-        <div className="flex items-center gap-3">
-          <div style={{ width: '47.2222px' }} className="hidden lg:flex shrink-0">
-            <PuppyLogo size={48} />
+        <Link to="/" className="flex items-center gap-3 group/navlogo select-none cursor-pointer">
+          <div style={{ width: '47.2222px' }} className="hidden lg:flex shrink-0 transition-transform duration-300 group-hover/navlogo:scale-105">
+            <PuppyLogo size={48} type="web" />
           </div>
           <div className="flex flex-col">
-            <h1 className="font-waterfall text-[39px] italic font-bold text-[#8c3646] leading-[30px] tracking-tight">
+            <h1 className="font-waterfall text-[39px] italic font-bold text-[#8c3646] leading-[30px] tracking-tight transition-colors duration-300 group-hover/navlogo:text-[#8c3646]/80">
               Payroll Hub
             </h1>
-            <span className="font-mono text-[8px] lg:text-[9.5px] tracking-[0.3em] uppercase text-[#3D3935]/50 mt-1.5 select-none font-bold">
+            <span className="font-mono text-[8px] lg:text-[9.5px] tracking-[0.3em] uppercase text-[#3D3935]/50 mt-1.5 font-bold">
               Institutional Administration
             </span>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Center: Soft Sky Pill Navigation */}
