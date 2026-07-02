@@ -221,24 +221,31 @@ export async function syncRosterToSupabase(
     if (!dateStr) return "";
     const cleaned = dateStr.replace(/^[a-zA-Z]{3,4}\s+/, "").trim(); // Remove "Fri ", "Mon ", etc.
     
-    // Check YYYY-MM-DD
-    if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
-      return cleaned;
-    }
-    
     const matchYmd = cleaned.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
     if (matchYmd) {
-      return `${matchYmd[1]}-${matchYmd[2].padStart(2, '0')}-${matchYmd[3].padStart(2, '0')}`;
+      const p2 = parseInt(matchYmd[2], 10);
+      const p3 = parseInt(matchYmd[3], 10);
+      let m = p2, d = p3;
+      if (p2 > 12) { d = p2; m = p3; }
+      return `${matchYmd[1]}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
     }
 
     const matchDmy = cleaned.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
     if (matchDmy) {
-      return `${matchDmy[3]}-${matchDmy[2].padStart(2, '0')}-${matchDmy[1].padStart(2, '0')}`;
+      const p1 = parseInt(matchDmy[1], 10);
+      const p2 = parseInt(matchDmy[2], 10);
+      let d = p1, m = p2;
+      if (p2 > 12) { d = p2; m = p1; }
+      return `${matchDmy[3]}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
     }
 
     const matchYmdSlash = cleaned.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
     if (matchYmdSlash) {
-      return `${matchYmdSlash[1]}-${matchYmdSlash[2].padStart(2, '0')}-${matchYmdSlash[3].padStart(2, '0')}`;
+      const p2 = parseInt(matchYmdSlash[2], 10);
+      const p3 = parseInt(matchYmdSlash[3], 10);
+      let m = p2, d = p3;
+      if (p2 > 12) { d = p2; m = p3; }
+      return `${matchYmdSlash[1]}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
     }
 
     return cleaned;

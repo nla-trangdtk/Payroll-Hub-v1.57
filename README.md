@@ -41,3 +41,33 @@ Nếu máy tính của bạn đã cài đặt Node.js và bạn muốn deploy qu
 - `npm install` để cài đặt thư viện.
 - `npm run dev` để chạy môi trường code.
 - `npm run build` để đóng gói sinh ra file chạy production.
+
+## Lưu ý Quan trọng khi Deploy lên Vercel và Đồng bộ Supabase
+
+Khi deploy ứng dụng lên Vercel, nếu bạn gặp lỗi không thể lưu dữ liệu hay đồng bộ (sync) lên Supabase, nguyên nhân phổ biến nhất là **thiếu hoặc chưa cấu hình đúng các Biến Môi trường (Environment Variables)** trên bảng điều khiển (Dashboard) của Vercel.
+
+### Các bước khắc phục lỗi kết nối Supabase trên Vercel:
+
+1. **Đăng nhập vào Dashboard của Vercel**:
+   - Truy cập [Vercel](https://vercel.com) và chọn dự án (project) của bạn.
+
+2. **Truy cập phần cài đặt biến môi trường**:
+   - Vào mục **Settings** -> **Environment Variables**.
+
+3. **Thêm đầy đủ 2 biến môi trường Client-side của Supabase**:
+   - **Tên biến**: `VITE_SUPABASE_URL`
+     - **Giá trị**: URL dự án Supabase của bạn (ví dụ: `https://xxxx.supabase.co`).
+   - **Tên biến**: `VITE_SUPABASE_ANON_KEY`
+     - **Giá trị**: Khóa anon public key của dự án Supabase.
+   - *Lưu ý*: Phải giữ nguyên tiền tố `VITE_` ở đầu tên biến thì ứng dụng React mới có thể đọc được ở phía client-side.
+
+4. **Thêm các biến môi trường Server-side (nếu dùng tính năng đồng bộ Google Drive/Sheets)**:
+   - Thêm `GOOGLE_CLIENT_EMAIL` và `GOOGLE_PRIVATE_KEY` vào cùng mục Settings của Vercel nếu bạn sử dụng các tính năng đồng bộ dữ liệu tự động từ tài khoản Google Drive dịch vụ.
+
+5. **Redeploy lại dự án**:
+   - Sau khi lưu các biến môi trường, hãy vào mục **Deployments** trên Vercel, chọn lượt deploy gần nhất và bấm **Redeploy** (hoặc tạo một commit mới và push lên GitHub) để Vercel build lại ứng dụng với các cấu hình biến môi trường mới nhất.
+
+### Kiểm tra trạng thái trên giao diện ứng dụng:
+- Sau khi redeploy thành công, mở trang web của bạn trên Vercel.
+- Kiểm tra góc giao diện hoặc thông báo xem hệ thống có còn báo lỗi `"Supabase configuration is missing or invalid"` hay không. Nếu các biến được nhận đúng, bạn sẽ đồng bộ được dữ liệu lên Supabase bình thường!
+

@@ -19,8 +19,8 @@ export function RosterRawTable({ data, onFilteredDataChange, onCellChange }: Ros
 
   return (
     <div 
-      className="flex flex-col h-full bg-white overflow-hidden shadow-sm border border-slate-200"
-      style={{ borderRadius: '48px' }}
+      className="flex flex-col h-full bg-white overflow-hidden shadow-sm"
+      style={{ borderRadius: '48px', borderWidth: '0px' }}
     >
       <div className="flex-1 flex flex-col overflow-hidden">
         <DataTable

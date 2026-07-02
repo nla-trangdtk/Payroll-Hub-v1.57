@@ -84,7 +84,7 @@ const parseExcelInWorker = async (file: File): Promise<Record<string, unknown>[]
   });
 };
 
-const mapExcelRosterRow = (row: Record<string, unknown>, fileName?: string) => {
+const mapExcelRosterRow = (row: Record<string, unknown>, fileName?: string, fileId?: string) => {
   const rawCenter = String(getVal(row, ["center", "mã ae", "ae", "ae code"]) || "").trim();
   const info = getCenterInfoByAECode(rawCenter);
   const l07 = info?.l07 || rawCenter || "UNKNOWN";
@@ -153,9 +153,9 @@ const mapExcelRosterRow = (row: Record<string, unknown>, fileName?: string) => {
     classCode: finalClass,
     from: gio_vao,
     to: gio_ra,
-    chargeToCenterMkt: chargeToCenterMkt,
     _sourceFile: fileName || row._sourceFile || "",
-    _rowId: row._rowId || ""
+    _rowId: fileId || row._rowId || "",
+    _uuid: row._uuid || generateUUID()
   };
 };
 
@@ -591,7 +591,8 @@ export default function TimesheetSummaryPage({
       
       updateAppData((prev: Record<string, unknown>) => ({
         ...prev,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        lastSupabaseSyncAt: new Date().toISOString()
       }), true);
       toast.success("Đã tự động lưu cứng dữ liệu trên web.");
     } catch (err: unknown) {
@@ -622,12 +623,8 @@ export default function TimesheetSummaryPage({
 
     handleUpdateRow(id, "status", "processing");
     try {
-      const data = await fetchGoogleSheetAsFile(row.url, row.sheetName || "Sheet1");
-      if (data && data.content) {
-         // Process file content...
-         const blob = new Blob([data.content], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-         const file = new File([blob], row.fileName || `${row.l07 || 'Sheet'}.xlsx`);
-         
+      const file = await fetchGoogleSheetAsFile(row.url, row.sheetName || "Sheet1");
+      if (file) {
          const allRows = await parseExcelInWorker(file);
          
          updateAppData((prev) => {
@@ -797,7 +794,7 @@ export default function TimesheetSummaryPage({
           else if (headers.includes("today") || isCache)
             next.Q_Cache = next.Q_Cache.concat(allRows);
           else {
-            const mappedRosters = allRows.map((r: Record<string, unknown>) => mapExcelRosterRow(r, file.name));
+            const mappedRosters = allRows.map((r: Record<string, unknown>) => mapExcelRosterRow(r, file.name, rowId));
             next.Q_Roster = next.Q_Roster.concat(mappedRosters);
           }
 

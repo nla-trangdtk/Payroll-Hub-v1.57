@@ -2220,7 +2220,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
                 {columns.some(c => c.group) && (
                   <tr>
                     {/* {selectable && <th rowSpan={2} className="bg-slate-50 border-b border-r border-border" />} */}
-                    {showRowNumber && <th rowSpan={2} className={`${headerClassName || "bg-[#F3EFE0]"} border-b border-r border-[#E2E8F0]`} />}
+                    {showRowNumber && <th rowSpan={2} className={`sticky top-0 z-[60] w-[50px] text-center ${headerClassName || "bg-[#F3EFE0]"} border-b border-r border-[#E2E8F0] text-[0.75rem] font-bold uppercase text-slate-800`}>No.</th>}
                     {(() => {
                       const groupings: { group: string | undefined, count: number, startIdx: number }[] = [];
                       visibleColumns.forEach((col, idx) => {
@@ -2238,7 +2238,11 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
                             <th 
                               key={idx} 
                               colSpan={g.count}
-                              className={`${headerClassName || "bg-[#F3EFE0]"} border-b border-r border-[#E2E8F0] py-2 text-[0.75rem] font-bold uppercase text-center text-slate-800`}
+                              className={`${
+                                g.group === 'THÔNG TIN CHUNG' ? 'bg-amber-100/60 text-amber-900' :
+                                g.group === 'CHI TIẾT GIỜ LÀM TA' ? 'bg-emerald-100/60 text-emerald-900' :
+                                headerClassName || "bg-[#F3EFE0]"
+                              } border-b border-r border-[#E2E8F0] py-2 text-[0.75rem] font-bold uppercase text-center`}
                             >
                               {g.group}
                             </th>

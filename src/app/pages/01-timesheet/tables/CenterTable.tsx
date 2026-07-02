@@ -15,7 +15,7 @@ export function CenterTable({ data, onFilteredDataChange }: CenterTableProps) {
   }, [data]);
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+    <div className="flex flex-col h-full bg-white rounded-xl overflow-hidden shadow-sm" style={{ borderWidth: '0px' }}>
       <div 
         className="bg-white border-b border-slate-100 flex items-center justify-between"
         style={{ height: "64px", paddingLeft: "20px", paddingRight: "20px" }}

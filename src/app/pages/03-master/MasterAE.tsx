@@ -502,14 +502,14 @@ export function MasterAE() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="absolute inset-0 flex flex-col min-h-0 bg-transparent px-[32px] pt-[20px] pb-[20px] gap-8 items-center overflow-hidden"
+            className="absolute inset-0 flex flex-col min-h-0 bg-transparent px-[20px] pt-[20px] pb-[20px] gap-8 items-center overflow-hidden"
           >
             {/* Decorative Background Elements */}
             <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] -z-10" />
             <div className="absolute bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[100px] -z-10" />
 
             {/* Main Content Card */}
-            <div className="bg-white soft-card force-light flex-1 flex flex-col min-h-0 relative z-10 w-full overflow-hidden">
+            <div className="bg-white soft-card force-light flex-1 flex flex-col min-h-0 relative z-10 w-full overflow-hidden pl-0" style={{ paddingLeft: "0px" }}>
               <div className="absolute inset-0 striped-pattern opacity-[0.05] pointer-events-none rounded-[2.5rem] overflow-hidden" />
 
               {/* Integrated Header & Controls */}
@@ -519,7 +519,7 @@ export function MasterAE() {
                   <PuppyLogo size={40} className="shrink-0 hidden md:flex" />
                   <div className="min-w-0 text-[11px] leading-[15px] h-[63px]">
                     <div className="flex items-center gap-3 mb-[8px]">
-                      <h2 className="text-[25px] leading-[17px] font-normal font-serif text-foreground tracking-tight flex items-end gap-1">
+                      <h2 className="text-[29px] leading-[17px] font-bold font-serif text-foreground tracking-tight flex items-end gap-1" style={{ fontSize: "29px", fontWeight: "bold", lineHeight: "17px" }}>
                         Final from{" "}
                         <span
                           className="not-italic font-bold font-script text-3xl md:text-5xl lowercase inline-block transform -translate-y-0.5 h-[39px]"

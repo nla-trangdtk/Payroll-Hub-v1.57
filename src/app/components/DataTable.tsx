@@ -2117,6 +2117,8 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
           className={`flex flex-col flex-1 min-h-0 outline-none overflow-hidden relative border-0 border-white ${className || ""} data-table-wrapper`}
           style={
             {
+              borderWidth: "0px",
+              borderStyle: "none",
               "--table-padding": densityStyles[rowDensity].padding,
               "--font-size": densityStyles[rowDensity].fontSize,
               "--header-font-size": densityStyles[rowDensity].headerFontSize,
@@ -2489,8 +2491,8 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
                     
                     scrollContainerRef.current?.scrollTo({ top: 0 });
                   }}
-                  className="h-6 px-1 text-[12px] font-bold text-slate-700 border border-slate-200 rounded-md flex items-center bg-white focus:ring-1 focus:ring-primary/20 cursor-pointer hover:bg-slate-50 transition-colors shadow-sm"
-                  style={{ fontSize: "12px" }}
+                  className="h-6 px-1 text-[14px] font-bold text-slate-700 border border-slate-200 rounded-md flex items-center bg-white focus:ring-1 focus:ring-primary/20 cursor-pointer hover:bg-slate-50 transition-colors shadow-sm"
+                  style={{ fontSize: "14px" }}
                 >
                   <option value="50">50 dòng</option>
                   <option value="100">100 dòng</option>

@@ -1,5 +1,5 @@
 import { PuppyLogo } from "../../components/shared/PuppyLogo";
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useMemo, useRef, useState, useEffect, useTransition, useCallback } from "react";
 import { useLocation } from "react-router";
 import { useAppData } from "../../lib/contexts/AppDataContext";
@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
-import { Copy } from "lucide-react";
+import { Copy, Clock } from "lucide-react";
 import { RosterRawTable } from "./tables/RosterRawTable";
 import { EmployeeTable } from "./tables/EmployeeTable";
 import { CenterTable } from "./tables/CenterTable";
@@ -108,6 +108,11 @@ export function TimesheetHub() {
         console.log("Supabase data already loaded in this session. Skipping auto-fetch on tab switch.");
         return;
       }
+      if ((appData.Q_Roster && appData.Q_Roster.length > 0) || (appData.Q_Staff && appData.Q_Staff.length > 0)) {
+        console.log("Local data already exists. Skipping auto-fetch from Supabase to prevent overwriting unsynced local data.");
+        hasFetchedSupabase = true;
+        return;
+      }
       try {
         // Fetch roster_cham_cong
         const { data: dbRoster, error: rosterErr } = await supabase
@@ -139,6 +144,7 @@ export function TimesheetHub() {
         const mappedRoster = (dbRoster || []).map((row: any) => ({
           ...(row.raw_data || {}),
           _rowId: row.unique_id || `supa-r-${row.id}`,
+          _uuid: row.unique_id || `supa-u-${row.id}`,
           _sourceFile: row.raw_data?._sourceFile || "Supabase_Live",
           center: row.l07 || "",
           l07: row.l07 || "",
@@ -612,7 +618,8 @@ export function TimesheetHub() {
       
       updateAppData((prev: any) => ({
         ...prev,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        lastSupabaseSyncAt: new Date().toISOString()
       }), true);
       toast.success("Đã tự động lưu cứng dữ liệu trên web.");
     } catch (err: unknown) {
@@ -700,6 +707,8 @@ export function TimesheetHub() {
         Q_Staff: [...staffData],
         Q_Salary_Scale: [...salaryData],
         Q_Cache: INITIAL_APP_DATA.Q_Cache ? [...INITIAL_APP_DATA.Q_Cache] : [],
+        updatedAt: new Date().toISOString(),
+        lastSupabaseSyncAt: new Date().toISOString()
       }), true);
 
       toast.dismiss(loadToastId);
@@ -725,7 +734,9 @@ export function TimesheetHub() {
     updateAppData((prev) => {
       const qRoster = prev.Q_Roster || [];
       const updatedRoster = qRoster.map((r) => {
-        if (r._rowId === row._rowId) {
+        const isMatch = (r._uuid && row._uuid && r._uuid === row._uuid) || 
+                        (!r._uuid && r._rowId === row._rowId && r.ma_nv === row.ma_nv && r.ngay === row.ngay && r.gio_vao === row.gio_vao);
+        if (isMatch) {
           return {
             ...r,
             [colKey]: value,
@@ -774,12 +785,6 @@ export function TimesheetHub() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex items-center gap-4">
                   <div className="flex flex-col">
-                    <span 
-                      className="font-mono text-[8.5px] tracking-[0.2em] uppercase text-[#3D3935]/50 leading-none"
-                      style={{ fontWeight: 'bold', fontSize: '9.5px', lineHeight: '9.5px' }}
-                    >
-                      DATASET SELECTOR
-                    </span>
                     <div className="flex items-center gap-3 mt-1">
                       <button
                         onClick={() => setShowSidebar(!showSidebar)}
@@ -843,7 +848,7 @@ export function TimesheetHub() {
                   <DropdownMenuTrigger asChild>
                     <button className="p-2 px-3 rounded-xl border border-[rgba(61,57,53,0.08)] bg-white hover:bg-slate-50 text-[#3D3935]/70 transition-all flex items-center gap-2 text-xs font-bold shadow-sm select-none cursor-pointer">
                       <Plus className="w-4 h-4 text-[#E5A8A0]" />
-                      <span>Thao tác khác</span>
+                      <span style={{ fontSize: "14px" }}>Thao tác khác</span>
                       <ChevronDown className="w-3 h-3 opacity-60 text-[#3D3935]" />
                     </button>
                   </DropdownMenuTrigger>
@@ -895,14 +900,28 @@ export function TimesheetHub() {
             </div>
 
             {/* Inner Content Area holding Sidebar and Table */}
-            <div className="flex-1 flex flex-col lg:flex-row min-h-0 gap-4 relative overflow-hidden">
+            <div 
+              className="flex-1 flex flex-col lg:flex-row min-h-0 gap-4 relative overflow-hidden"
+              style={{
+                marginLeft: "1px",
+                paddingLeft: "1px",
+                paddingTop: "1px",
+                paddingBottom: "1px",
+                paddingRight: "1px",
+                marginRight: "1px",
+                marginBottom: "1px"
+              }}
+            >
               {/* Left Panel: Sidebar Controls */}
               {showSidebar && (
                 <div 
-                  className="w-full lg:w-[220px] shrink-0 flex flex-col pr-0 lg:pr-1 h-full select-none animate-in fade-in slide-in-from-left duration-500"
-                  style={{ borderRadius: '48px', borderWidth: '0px' }}
+                  className="w-full lg:w-[233px] shrink-0 flex flex-col pr-0 lg:pr-1 h-full select-none animate-in fade-in slide-in-from-left duration-500"
+                  style={{ borderRadius: '48px', borderWidth: '0px', width: "233px" }}
                 >
-                  <div className="bg-[#FAF5EE]/80 backdrop-blur-sm p-5 pb-6 rounded-[48px] border border-[#3D3935]/5 flex flex-col h-full shadow-sm overflow-hidden">
+                  <div 
+                    className="bg-[#FAF5EE]/80 backdrop-blur-sm p-5 pb-6 rounded-[48px] border border-[#3D3935]/5 flex flex-col h-full shadow-sm overflow-hidden"
+                    style={{ borderWidth: "0px" }}
+                  >
                     {/* Fixed Header outside scrollable content */}
                   <div className="flex items-center justify-between mb-4 shrink-0">
                     <span className="font-sans font-black text-[10px] tracking-widest text-[#3D3935]/40 uppercase">Filters</span>
@@ -969,6 +988,22 @@ export function TimesheetHub() {
                             </div>
                           </DropdownMenuContent>
                         </DropdownMenu>
+                      </div>
+
+                      {/* Last Pushed to Supabase Status */}
+                      <div className="flex flex-col gap-1 relative bg-blue-50/50 p-2 rounded-lg border border-blue-100/50 shadow-sm animate-in fade-in zoom-in-95">
+                        <span 
+                          className="font-mono tracking-[0.2em] uppercase text-blue-500/80 leading-none flex items-center gap-1"
+                          style={{ fontWeight: 'bold', fontSize: '8px', lineHeight: '10px' }}
+                        >
+                          <Clock className="w-2.5 h-2.5" />
+                          ĐÃ PUSH SUPABASE
+                        </span>
+                        <span className="text-[10px] font-bold text-blue-700">
+                          {appData?.lastSupabaseSyncAt 
+                            ? format(new Date(appData.lastSupabaseSyncAt), "dd/MM/yyyy hh:mm a").replace("AM", "SA").replace("PM", "CH")
+                            : "Chưa đồng bộ"}
+                        </span>
                       </div>
 
                       {/* Start Date Selection */}

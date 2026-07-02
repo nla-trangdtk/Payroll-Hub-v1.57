@@ -355,7 +355,7 @@ export function TimesheetInputTable({
                     />
                   </td>
                   <td
-                    className="px-4 py-2 border-b border-r border-[#E2E8F0]"
+                    className="px-4 py-3.5 border-b border-r border-[#E2E8F0]"
                     style={{
                       fontFamily: "var(--font-table, var(--font-main))",
                       fontSize: "var(--font-size)",
@@ -371,7 +371,7 @@ export function TimesheetInputTable({
                           <FileSpreadsheet className="w-3.5 h-3.5 text-primary group-hover/btn:scale-110 transition-transform" />
                         </button>
                         {row.fileName ? (
-                          <div className="w-full h-8 bg-slate-50/80 border border-accent/30 rounded-md px-2 text-[0.8em] text-accent flex items-center justify-between gap-2 overflow-hidden shadow-sm">
+                          <div className="w-full h-8 bg-slate-50/80 border border-accent/30 rounded-md px-2 text-[0.85em] text-accent flex items-center justify-between gap-2 overflow-hidden shadow-sm">
                             <div className="flex items-center gap-1.5 min-w-0 truncate">
                               <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0" />
                               <span className="truncate font-medium" title={row.fileName}>{row.fileName}</span>
@@ -393,7 +393,7 @@ export function TimesheetInputTable({
                           <input
                             type="text"
                             placeholder="Dán link GSheet/Folder..."
-                            className="w-full h-8 bg-slate-50/50 border border-dashed border-border rounded-md px-2 text-[0.8em] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+                            className="w-full h-8 bg-slate-50/50 border border-dashed border-border rounded-md px-2 text-[0.85em] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 const val = e.currentTarget.value.trim();
@@ -418,7 +418,7 @@ export function TimesheetInputTable({
                     </div>
                   </td>
                   <td
-                    className="px-4 py-2 text-center text-[0.8em] text-slate-500 border-b border-r border-[#E2E8F0]"
+                    className="px-4 py-3.5 text-center text-[0.85em] text-slate-500 border-b border-r border-[#E2E8F0]"
                     style={{
                       fontFamily: "var(--font-table, var(--font-main))",
                       fontSize: "var(--font-size)",
@@ -427,7 +427,7 @@ export function TimesheetInputTable({
                     {row.date || "---"}
                   </td>
                   <td
-                    className="px-4 py-2 text-center border-b border-r border-[#E2E8F0]"
+                    className="px-4 py-3.5 text-center border-b border-r border-[#E2E8F0]"
                     style={{
                       fontFamily: "var(--font-table, var(--font-main))",
                       fontSize: "var(--font-size)",
@@ -459,7 +459,7 @@ export function TimesheetInputTable({
                     </div>
                   </td>
                   <td
-                    className="px-4 py-2 text-center border-b border-r border-[#E2E8F0]"
+                    className="px-4 py-3.5 text-center border-b border-r border-[#E2E8F0]"
                     style={{
                       fontFamily: "var(--font-table, var(--font-main))",
                     }}

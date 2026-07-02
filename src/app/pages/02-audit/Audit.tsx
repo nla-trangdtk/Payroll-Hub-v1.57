@@ -628,9 +628,17 @@ export function Audit() {
         maxStudentsInSpan > 0 ? String(maxStudentsInSpan) : "0";
 
       let totalTaHours = 0;
+      let spanTeacherName = "";
       for (let k = i; k < j; k++) {
         totalTaHours += allSessions[k].ta?.hours || 0;
+        if (!spanTeacherName && allSessions[k].teacher?.name && allSessions[k].teacher.name !== "-") {
+          spanTeacherName = allSessions[k].teacher.name;
+        }
       }
+      if (!spanTeacherName) {
+        spanTeacherName = current._fallbackTeacherName || "";
+      }
+      
       const formattedTotalTaHours = totalTaHours > 0 ? totalTaHours.toFixed(2).replace(".", ",") : "0";
 
       for (let k = i; k < j; k++) {
@@ -643,10 +651,8 @@ export function Audit() {
           className: s._parentClassName || "KHÔNG CÓ LỚP HỌC",
           dateStr: s.fullDate || s.date || "",
           center: s._parentCenter || "",
-          teacherName: s.teacher?.name || "",
-          teacherHours: (s.teacher?.hours !== undefined && s.teacher.hours !== 0)
-            ? s.teacher.hours.toFixed(2).replace(".", ",")
-            : "",
+          teacherName: spanTeacherName,
+          teacherHours: formattedTeacherHours,
           taId: (s.ta?.id && s.ta.id !== "-") ? s.ta.id : "",
           taName: (s.ta?.name && s.ta.name !== "-") ? s.ta.name : "",
           taHours: (s.ta?.hours !== undefined && s.ta.hours !== 0)
@@ -720,6 +726,7 @@ export function Audit() {
     {
       key: "center",
       label: "Center/Business",
+      group: "THÔNG TIN CHUNG",
       sortable: true,
       filterable: true,
       autoRowSpan: true,
@@ -741,6 +748,7 @@ export function Audit() {
     {
       key: "className",
       label: "Lớp",
+      group: "THÔNG TIN CHUNG",
       sortable: true,
       filterable: true,
       autoRowSpan: true,
@@ -765,6 +773,7 @@ export function Audit() {
     {
       key: "dateStr",
       label: "DATE",
+      group: "THÔNG TIN CHUNG",
       sortable: true,
       filterable: true,
       autoRowSpan: true,
@@ -786,6 +795,7 @@ export function Audit() {
     {
       key: "teacherName",
       label: teacherGroupLabel,
+      group: "THÔNG TIN CHUNG",
       sortable: true,
       filterable: true,
       autoRowSpan: true,
@@ -802,6 +812,7 @@ export function Audit() {
     {
       key: "teacherHours",
       label: "Giờ dạy (h)",
+      group: "THÔNG TIN CHUNG",
       sortable: true,
       filterable: true,
       autoRowSpan: true,
@@ -821,6 +832,7 @@ export function Audit() {
     {
       key: "numStudents",
       label: "No. Students",
+      group: "THÔNG TIN CHUNG",
       sortable: true,
       filterable: true,
       autoRowSpan: true,
@@ -838,6 +850,7 @@ export function Audit() {
     {
       key: "allowedTAs",
       label: "Allowed TAs",
+      group: "THÔNG TIN CHUNG",
       sortable: true,
       filterable: true,
       autoRowSpan: true,
@@ -850,6 +863,7 @@ export function Audit() {
     {
       key: "actualTAs",
       label: "Actual TAs",
+      group: "THÔNG TIN CHUNG",
       sortable: true,
       filterable: true,
       autoRowSpan: true,
@@ -864,6 +878,7 @@ export function Audit() {
     {
       key: "taId",
       label: "ID NUMBER",
+      group: "CHI TIẾT GIỜ LÀM TA",
       sortable: true,
       filterable: true,
       width: 120,
@@ -882,6 +897,7 @@ export function Audit() {
     {
       key: "taName",
       label: taGroupLabel,
+      group: "CHI TIẾT GIỜ LÀM TA",
       sortable: true,
       filterable: true,
       width: 180,
@@ -900,6 +916,7 @@ export function Audit() {
     {
       key: "taHours",
       label: "Giờ làm (h)", // Renamed to reflect merged sum
+      group: "CHI TIẾT GIỜ LÀM TA",
       sortable: true,
       filterable: true,
       width: 90,
@@ -913,9 +930,9 @@ export function Audit() {
     {
       key: "variance",
       label: "CHÊNH LỆCH",
+      group: "CHI TIẾT GIỜ LÀM TA",
       sortable: true,
       filterable: true,
-      autoRowSpan: true,
       width: 110,
       align: "center",
       render: (val: string) => (

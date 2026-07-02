@@ -25,7 +25,7 @@ export const MktLocalNorthPivotTable: React.FC<MktLocalNorthPivotTableProps> = (
   grandTotals,
 }) => {
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+    <div className="flex flex-col h-full bg-white rounded-xl overflow-hidden shadow-sm" style={{ borderWidth: '0px' }}>
       {/* Header Info - Consistent with other tables */}
       <div 
         className="bg-orange-50/50 border-b border-orange-100 flex items-center justify-between"
