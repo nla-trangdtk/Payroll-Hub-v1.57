@@ -56,7 +56,7 @@ export const MktLocalNorthPivotTable: React.FC<MktLocalNorthPivotTableProps> = (
       </div>
 
       <div className="flex-1 overflow-auto custom-scrollbar">
-        <table className="w-full border-collapse text-[11px]">
+        <table className="w-full border-collapse font-sans text-[13px]">
           <thead className="sticky top-0 z-20">
             <tr className="bg-slate-50 shadow-sm">
               <th className="px-4 py-3 text-center font-black uppercase tracking-wider text-slate-500 border border-slate-200 bg-slate-50/95 backdrop-blur min-w-[120px]">

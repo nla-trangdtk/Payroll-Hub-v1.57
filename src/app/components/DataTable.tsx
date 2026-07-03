@@ -162,9 +162,11 @@ const ColumnFilter = ({
     // 2. Apply ALL OTHER column filters
     Object.entries(filterState).forEach(([key, allowedValues]) => {
       if (key !== column.key && allowedValues instanceof Set) {
-        currentData = currentData.filter((row: any) =>
-          allowedValues.has(row[key]),
-        );
+        currentData = currentData.filter((row: any) => {
+          const rawVal = row[key];
+          const val = (rawVal == null || rawVal === "") ? "undefined" : rawVal;
+          return allowedValues.has(val);
+        });
       }
     });
 
@@ -194,9 +196,10 @@ const ColumnFilter = ({
 
   const filteredValues = useMemo(() => {
     if (!search) return uniqueValues;
-    return uniqueValues.filter((v) =>
-      String(v).toLowerCase().includes(search.toLowerCase()),
-    );
+    return uniqueValues.filter((v) => {
+      const displayVal = v === "undefined" ? "(Trống)" : String(v);
+      return displayVal.toLowerCase().includes(search.toLowerCase());
+    });
   }, [uniqueValues, search]);
 
   const currentFilters = filterState[column.key];
@@ -488,8 +491,8 @@ const DataRow = React.memo(
             `}
               style={{
                 padding: "var(--table-padding, 0.65rem 1rem)",
-                fontFamily: "var(--font-table, var(--font-main))",
-                fontSize: "var(--font-size)",
+                fontFamily: "var(--font-inter)",
+                fontSize: "13px",
                 width: widthStyle,
                 minWidth: widthStyle,
                 boxShadow:
@@ -762,6 +765,11 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
       r: number;
       c: number;
     } | null>(null);
+    const activeCellSourceRef = useRef<"mouse" | "keyboard">("keyboard");
+    const setActiveCellWithSource = useCallback((cell: { r: number; c: number } | null, source: "mouse" | "keyboard") => {
+      activeCellSourceRef.current = source;
+      setActiveCell(cell);
+    }, []);
     const [selectionRange, setSelectionRange] = useState<{
       startR: number;
       endR: number;
@@ -972,7 +980,11 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
       // Apply filters
       Object.entries(columnFilters).forEach(([key, allowedValues]) => {
         if (allowedValues) {
-          result = result.filter((row) => allowedValues.has(row[key]));
+          result = result.filter((row) => {
+            const rawVal = row[key];
+            const val = (rawVal == null || rawVal === "") ? "undefined" : rawVal;
+            return allowedValues.has(val);
+          });
         }
       });
 
@@ -1120,7 +1132,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
 
     // Scroll active cell into view
     useEffect(() => {
-      if (activeCell && scrollContainerRef.current) {
+      if (activeCell && scrollContainerRef.current && activeCellSourceRef.current === "keyboard" && !isSelecting) {
         // Find if row is in paginatedData
         const startIdx = itemsPerPage === Infinity ? 0 : (currentPage - 1) * itemsPerPage;
         const endIdx = itemsPerPage === Infinity ? filteredAndSortedData.length - 1 : startIdx + itemsPerPage - 1;
@@ -1579,7 +1591,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
             }
           }
           if (!isInsideRange) {
-            setActiveCell({ r, c });
+            setActiveCellWithSource({ r, c }, "mouse");
             setSelectionRange(null); // Clear range if right click outside
           }
         }
@@ -1600,7 +1612,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
       if (e.button !== 0) return;
       if (filteredAndSortedData.length === 0) return;
       setIsSelecting(true);
-      setActiveCell({ r: 0, c: cIdx });
+      setActiveCellWithSource({ r: 0, c: cIdx }, "mouse");
       setSelectionRange({
         startR: 0,
         endR: filteredAndSortedData.length - 1,
@@ -1721,7 +1733,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
             endC: c,
           });
         } else {
-          setActiveCell({ r, c });
+          setActiveCellWithSource({ r, c }, "mouse");
           setSelectionRange({ startR: r, endR: r, startC: c, endC: c });
         }
       },
@@ -1789,7 +1801,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
             const { r, c } = editingCell;
             commitEdit();
             const nextR = Math.min(r + 1, filteredAndSortedData.length - 1);
-            setActiveCell({ r: nextR, c });
+            setActiveCellWithSource({ r: nextR, c }, "keyboard");
             if (nextR !== r) setTimeout(() => startEditing(nextR, c), 10);
           } else if (e.key === "Tab") {
             e.preventDefault();
@@ -1810,7 +1822,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
                 nextC = 0;
               }
             }
-            setActiveCell({ r: nextR, c: nextC });
+            setActiveCellWithSource({ r: nextR, c: nextC }, "keyboard");
             if (nextR !== r || nextC !== c)
               setTimeout(() => startEditing(nextR, nextC), 10);
           } else if (e.key === "Escape") {
@@ -1833,7 +1845,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
           const nextR = e.ctrlKey || e.metaKey 
             ? filteredAndSortedData.length - 1 
             : Math.min(r + 1, filteredAndSortedData.length - 1);
-          setActiveCell({ r: nextR, c });
+          setActiveCellWithSource({ r: nextR, c }, "keyboard");
           if (e.shiftKey && selectionRange)
             setSelectionRange({ ...selectionRange, endR: nextR });
           else
@@ -1846,7 +1858,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
           const nextR = e.ctrlKey || e.metaKey ? 0 : Math.max(r - 1, 0);
-          setActiveCell({ r: nextR, c });
+          setActiveCellWithSource({ r: nextR, c }, "keyboard");
           if (e.shiftKey && selectionRange)
             setSelectionRange({ ...selectionRange, endR: nextR });
           else
@@ -1861,7 +1873,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
           const nextC = e.ctrlKey || e.metaKey 
             ? visibleColumns.length - 1 
             : Math.min(c + 1, visibleColumns.length - 1);
-          setActiveCell({ r, c: nextC });
+          setActiveCellWithSource({ r, c: nextC }, "keyboard");
           if (e.shiftKey && selectionRange)
             setSelectionRange({ ...selectionRange, endC: nextC });
           else
@@ -1874,7 +1886,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
         } else if (e.key === "ArrowLeft") {
           e.preventDefault();
           const nextC = e.ctrlKey || e.metaKey ? 0 : Math.max(c - 1, 0);
-          setActiveCell({ r, c: nextC });
+          setActiveCellWithSource({ r, c: nextC }, "keyboard");
           if (e.shiftKey && selectionRange)
             setSelectionRange({ ...selectionRange, endC: nextC });
           else
@@ -1889,7 +1901,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
           const nextC = e.shiftKey
             ? Math.max(c - 1, 0)
             : Math.min(c + 1, visibleColumns.length - 1);
-          setActiveCell({ r, c: nextC });
+          setActiveCellWithSource({ r, c: nextC }, "keyboard");
           setSelectionRange({ startR: r, endR: r, startC: nextC, endC: nextC });
         } else if (e.key === "Enter" || e.key === "F2") {
           e.preventDefault();
@@ -2133,7 +2145,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
             ref={scrollContainerRef}
             tabIndex={0}
             className={`flex-1 overflow-y-scroll overflow-x-auto custom-scrollbar outline-none bg-transparent relative min-h-0 transition-opacity duration-100 mb-0 ${isStale ? "opacity-60" : "opacity-100"}`}
-            onFocus={() => !activeCell && setActiveCell({ r: 0, c: 0 })}
+            onFocus={() => !activeCell && setActiveCellWithSource({ r: 0, c: 0 }, "keyboard")}
             onMouseMove={handleTableMouseMove}
             style={{ 
               overscrollBehavior: "contain", 

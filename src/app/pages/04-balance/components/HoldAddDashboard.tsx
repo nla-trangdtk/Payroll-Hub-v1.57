@@ -1295,6 +1295,40 @@ export function HoldAddDashboard() {
             cancelRow.cancel = cancelRow.rawCancel;
           }
         });
+
+        const bonusRows = rowsInMonth.filter((e) =>
+          String(e.id).includes("_bonus"),
+        );
+        bonusRows.forEach((bonusRow) => {
+          const isOK = 
+            bonusRow.lenh === "OK" || 
+            bonusRow.isPaidStatus || 
+            isPeriodSaved(bonusRow.month) || 
+            isPeriodSaved(currentPeriod);
+          
+          if (isOK) {
+            // After being moved to OK status, the amount jumps to the salary adjustment column (Thu/Ps trong kỳ)
+            bonusRow.add = 0;
+            bonusRow.hold = 0;
+            bonusRow.cancel = 0;
+            bonusRow.bonus = 0;
+            bonusRow.thu = Math.abs(bonusRow.rawBonus);
+            bonusRow.chi = 0;
+            if (bonusRow.month !== currentPeriod || getMonthNum(bonusRow.displayMonth || "") < getMonthNum(currentPeriod)) {
+              bonusRow._isPastHoldApprove = true;
+            }
+          } else {
+            // When in "Duyệt" status (or any non-OK status), the amount remains in the Tạm tính Bonus column
+            bonusRow.thu = 0;
+            bonusRow.chi = 0;
+            bonusRow.bonus = bonusRow.rawBonus;
+          }
+          
+          if (bonusRow.lenh === "-" && !bonusRow.isPaidStatus) {
+             bonusRow._excludeFromTotals = true;
+             bonusRow.bonus = 0;
+          }
+        });
       });
     });
 
@@ -1302,8 +1336,8 @@ export function HoldAddDashboard() {
       // If it's an adjustment row (hold, add, or cancel) from a past month imported in the current period,
       // and NOT explicitly approved ("OK"), filter it out entirely to avoid showing up in the current month or affecting SĐCK.
       const isPastMonth = r.displayMonth && getMonthNum(r.displayMonth) < getMonthNum(currentPeriod);
-      const isAdjustment = String(r.id).includes("_hold") || String(r.id).includes("_add") || String(r.id).includes("_cancel");
-      const isHoldOrCancel = String(r.id).includes("_hold") || String(r.id).includes("_cancel");
+      const isAdjustment = String(r.id).includes("_hold") || String(r.id).includes("_add") || String(r.id).includes("_cancel") || String(r.id).includes("_bonus");
+      const isHoldOrCancel = String(r.id).includes("_hold") || String(r.id).includes("_cancel") || String(r.id).includes("_bonus");
       
       if (isAdjustment && isPastMonth && r.reportMonth === currentPeriod && r.lenh !== "OK" && !r.isPaidStatus && !isHoldOrCancel) {
         return false;
@@ -1809,6 +1843,7 @@ export function HoldAddDashboard() {
     grandAdd,
     grandHold,
     grandCancel,
+    grandBonus,
     grandBal,
     filteredData,
     rowRCloseBalances,
@@ -1819,6 +1854,7 @@ export function HoldAddDashboard() {
     let add = 0;
     let hold = 0;
     let cancel = 0;
+    let bonus = 0;
 
     monthKeys.forEach((mk) => {
       const t = computedMonthTotals[mk];
@@ -1829,6 +1865,7 @@ export function HoldAddDashboard() {
         add += t.addAmt;
         hold += t.holdAmt;
         cancel += t.cancelAmt;
+        bonus += t.bonusAmt;
       }
     });
 
@@ -1888,6 +1925,7 @@ export function HoldAddDashboard() {
       grandAdd: add,
       grandHold: hold,
       grandCancel: cancel,
+      grandBonus: bonus,
       grandBal: newestCloseBal,
       filteredData: filtered,
       rowRCloseBalances,
@@ -1990,6 +2028,22 @@ export function HoldAddDashboard() {
         );
       })
       .reduce((s, e) => s + Math.abs(e.chi) + (e.cancel || 0), 0);
+  }, [currentPeriodRows]);
+
+  const bonusPillValue = useMemo(() => {
+    return currentPeriodRows
+      .filter((e) => {
+        const idLower = String(e.id).toLowerCase();
+        const display = String(
+          e.customMonthDisplay || e.month || "",
+        ).toUpperCase();
+        return (
+          idLower.includes("_bonus") ||
+          idLower.includes("bonus") ||
+          display.includes("BONUS")
+        );
+      })
+      .reduce((s, e) => s + e.thu + (e.bonus || 0), 0);
   }, [currentPeriodRows]);
 
   return (
@@ -2663,10 +2717,13 @@ export function HoldAddDashboard() {
                 <td className="border-r border-b border-[#e6dfd3] p-3 text-right text-slate-500 font-bold !bg-[#F3EFE0] whitespace-nowrap">
                   {grandCancel !== 0 ? fmt(grandCancel) : "0"}
                 </td>
+                <td className="border-r border-b border-[#e6dfd3] p-3 text-right text-indigo-600 font-bold !bg-[#F3EFE0] whitespace-nowrap">
+                  {grandBonus !== 0 ? fmt(grandBonus) : "0"}
+                </td>
                 <td className="border-r border-b border-[#e6dfd3] p-3 text-center text-[11px] opacity-70 font-bold !bg-[#F3EFE0] text-[#2b1a0f] whitespace-nowrap">
                   {confirmedIds.size} đã duyệt
                 </td>
-                <td className="border-r border-[#e6dfd3] border-b border-[#e6dfd3] !bg-[#F3EFE0] min-w-[200px]" />
+                <td className="border-r border-[#e6dfd3] border-b border-[#e6dfd3] !bg-[#fef9c3] min-w-[200px]" />
               </tr>
             </tfoot>
           </table>

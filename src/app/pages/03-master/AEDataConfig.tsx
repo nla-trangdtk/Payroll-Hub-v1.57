@@ -218,6 +218,8 @@ export function AEDataConfig({
     "No",
     "ID Number",
     "Full name",
+    "Full Name",
+    "HỌ VÀ TÊN",
     "Salary Scale",
     "From",
     "To",
@@ -798,6 +800,8 @@ export function AEDataConfig({
                   const iN = getColIndex(h, "Full name", item.columnMapping, [
                     "NAME",
                     "TÊN",
+                    "FULL NAME",
+                    "HỌ VÀ TÊN",
                   ]);
                   const iA = getColIndex(
                     h,
@@ -961,7 +965,7 @@ export function AEDataConfig({
                     if (bonusVal === 0) continue;
 
                     const idVal = iId !== -1 ? String(row[iId] || "").trim() : "";
-                    const nameVal = iName !== -1 ? String(row[iName] || "").trim() : "";
+                    const nameVal = iName !== -1 ? cleanFullName(row[iName]) : "";
                     const centerVal = iCenter !== -1 ? String(row[iCenter] || "").trim() : "";
                     const emailVal = iEmail !== -1 ? String(row[iEmail] || "").trim() : "";
 
@@ -1105,6 +1109,8 @@ export function AEDataConfig({
                     "NV",
                     "GIÁO VIÊN",
                     "KHÁCH HÀNG",
+                    "FULL NAME",
+                    "HỌ VÀ TÊN",
                   ]);
                   const iA = getColIndex(
                     h,
@@ -1451,7 +1457,7 @@ export function AEDataConfig({
                     const idxName = colIndices["Full name"];
                     const nameVal =
                       idxName !== -1 && row[idxName] !== undefined
-                        ? String(row[idxName]).trim()
+                        ? cleanFullName(row[idxName])
                         : "";
 
                     const idxT = colIndices["TOTAL PAYMENT"];
@@ -1976,9 +1982,9 @@ export function AEDataConfig({
             <PuppyLogo size={56} className="shrink-0" />
 
             <div>
-              <h2 className="text-3xl font-normal font-serif text-foreground tracking-tight flex items-end gap-1" style={{ fontSize: "25px", paddingTop: "0px", paddingBottom: "0px" }}>
+              <h2 className="text-3xl font-normal text-[#719ea4] tracking-tight flex items-end gap-1" style={{ fontSize: "25px", paddingTop: "0px", paddingBottom: "0px", fontFamily: "Corinthia, cursive" }}>
                 Files from{" "}
-                <span className="not-italic font-script text-primary text-4xl lowercase inline-block transform -translate-y-0.5">
+                <span className="not-italic font-script text-[#7eb5b7] text-4xl lowercase inline-block transform -translate-y-0.5" style={{ fontSize: "44px", lineHeight: "38px", paddingLeft: "5px" }}>
                   AE
                 </span>
               </h2>

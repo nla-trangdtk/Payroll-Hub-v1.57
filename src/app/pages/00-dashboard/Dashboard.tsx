@@ -151,8 +151,8 @@ export function Dashboard() {
               </span>
             </div>
           </div>
-          <h1 className="text-5xl md:text-6xl font-display text-foreground leading-tight flex flex-wrap items-baseline gap-x-4">
-            <span className="not-italic font-script text-primary text-5xl md:text-7xl lowercase">
+          <h1 className="text-5xl md:text-6xl text-[#719ea4] leading-tight flex flex-wrap items-baseline gap-x-4" style={{ fontFamily: "Corinthia, cursive" }}>
+            <span className="not-italic font-script text-[#7eb5b7] text-5xl md:text-7xl lowercase" style={{ lineHeight: "38px", paddingLeft: "5px" }}>
               Payroll
             </span>
             <span>Management</span>
@@ -192,9 +192,9 @@ export function Dashboard() {
               <div className="w-10 h-10 bg-secondary/30 rounded-full flex items-center justify-center border border-secondary">
                 <Zap className="w-5 h-5 text-secondary-foreground" />
               </div>
-              <h2 className="text-[25px] font-normal font-serif text-foreground tracking-tight">
+              <h2 className="text-[25px] font-normal text-[#719ea4] tracking-tight" style={{ fontFamily: "Corinthia, cursive" }}>
                 Quick{" "}
-                <span className="not-italic font-script text-primary text-[33px] lowercase">
+                <span className="not-italic font-script text-[#7eb5b7] text-[44px] lowercase" style={{ lineHeight: "38px", paddingLeft: "5px" }}>
                   Actions
                 </span>
               </h2>

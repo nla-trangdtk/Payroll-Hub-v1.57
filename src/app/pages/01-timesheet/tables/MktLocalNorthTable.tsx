@@ -62,12 +62,12 @@ export function MktLocalNorthTable({ data, onFilteredDataChange }: MktLocalNorth
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white border-t border-border overflow-hidden rounded-[40px]">
       {/* Summary Ribbon */}
-      <div className="px-6 py-2 bg-primary/5 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between text-[11px] font-bold text-primary tracking-wider uppercase shrink-0 gap-2">
+      <div className="px-6 py-2 bg-primary/5 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between font-sans text-[13px] font-bold text-primary tracking-wider uppercase shrink-0 gap-2">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
           <span>Bảng Pivot Phí MKT Local North (Đơn giá: Số giờ làm * 20.000đ)</span>
         </div>
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex items-center gap-4 text-[13px]">
           <span>
             SỐ DÒNG: <span className="font-mono text-slate-800">{mktPivotRows.length}</span>
           </span>
@@ -84,13 +84,13 @@ export function MktLocalNorthTable({ data, onFilteredDataChange }: MktLocalNorth
       <div className="flex-1 overflow-auto custom-scrollbar relative">
         <table
           style={{ borderWidth: "0px", borderRadius: "0px" }}
-          className="w-full text-left border-collapse min-w-max relative bg-white"
+          className="w-full text-left border-collapse min-w-max relative bg-white font-sans text-[13px]"
         >
           <thead className="sticky top-0 z-[40] shadow-[0_1px_3px_rgba(0,0,0,0.05)] bg-white">
             <tr className="bg-white text-slate-800 h-10 border-b border-slate-200">
               <th
                 style={{ padding: "0" }}
-                className="text-xs font-black uppercase tracking-wider text-slate-700 text-left border-r border-border align-middle bg-white"
+                className="text-[13px] font-black uppercase tracking-wider text-slate-700 text-left border-r border-border align-middle bg-white"
               >
                 <div className="resize-x overflow-hidden w-[130px] min-w-[60px] pl-5 py-2.5 flex items-center">
                   Business

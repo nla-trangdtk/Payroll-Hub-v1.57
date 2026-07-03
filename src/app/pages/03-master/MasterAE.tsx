@@ -532,21 +532,22 @@ export function MasterAE() {
                   <div className="min-w-0 text-[11px] leading-[15px] h-[63px]">
                     <div className="flex items-center gap-3 mb-[8px]">
                       <h2
-                        className="text-[43px] leading-[21px] font-bold font-waterfall text-foreground tracking-tight flex items-end gap-1"
+                        className="text-[43px] leading-[21px] font-bold text-[#719ea4] tracking-tight flex items-end gap-1"
                         style={{
                           fontSize: "43px",
                           fontWeight: "bold",
                           lineHeight: "21px",
-                          fontFamily: "Waterfall",
+                          fontFamily: "Corinthia, cursive",
                         }}
                       >
                         Final from{" "}
                         <span
                           className="not-italic font-bold font-script lowercase inline-block transform -translate-y-0.5 h-[39px]"
                           style={{
-                            color: "#803d53",
-                            fontSize: "45px",
-                            lineHeight: "51px",
+                            color: "#7eb5b7",
+                            fontSize: "44px",
+                            lineHeight: "38px",
+                            paddingLeft: "5px",
                           }}
                         >
                           ae

@@ -439,30 +439,52 @@ export function BulkPayment({
       const st = String(row["Tháng phát sinh"] || row["Trạng thái"] || "").trim();
       const ss = String(row["Sheet Source"] || "").trim();
       const noteStr = String(row["Note"] || "").trim();
+      const trangThai = String(row["Tháng phát sinh"] || row["Trạng thái"] || "").toLowerCase();
+      const sheetSource = String(row["Sheet Source"] || "").toLowerCase();
+      const nghiepVu = String(row["Nghiệp vụ"] || "").toLowerCase();
 
       if (!extracted && rowMonthRaw && !isMonthInStrComp(rowMonthRaw)) {
         return;
       }
 
       let val = parseMoneyToNumber(row["TOTAL PAYMENT"] || row["Grand Total"] || row["GRAND TOTAL"] || row["Payment Amount"] || 0);
-      const nghiepVu = String(row["Nghiệp vụ"] || "").toLowerCase();
-      const label = String(row["Sheet Source"] || "").toUpperCase() || (val >= 0 ? "ADD" : "HOLD");
-      const isBonus = label.includes("BONUS") || label.includes("SUMMER") || label.includes("INSTRUCTORS") || nghiepVu.includes("bonus") || nghiepVu.includes("⏯") || nghiepVu.includes("⏩");
-      const isAdd = label.includes("ADD") || 
-                    nghiepVu.includes("add") || 
-                    nghiepVu.includes("release") || 
-                    nghiepVu.includes("unhold") || 
-                    nghiepVu.includes("thanh toán") ||
-                    nghiepVu.includes("paid") ||
-                    isBonus;
-      const isHold = (label.includes("HOLD") || nghiepVu.includes("hold")) && !isAdd && !isBonus;
+      let label = String(row["Sheet Source"] || "").toUpperCase() || (val >= 0 ? "ADD" : "HOLD");
+      
+      const nvCode = String(row["Nghiệp vụ"] || "").trim().toUpperCase();
+      const isPastMonth = isPastMonthHold(row, currentMonthNum, currentYearNum);
+
+      const phatSinhStr = String(row["Tháng phát sinh"] || "").trim().replace(/[-_/]/g, ".");
+      const [mStr, yStr] = phatSinhStr.split(".");
+      const mPhatSinh = parseInt(mStr, 10);
+      const yPhatSinh = parseInt(yStr, 10);
+      const isDiffMonth = !isNaN(mPhatSinh) && !isNaN(yPhatSinh) && (yPhatSinh !== currentYearNum || mPhatSinh !== currentMonthNum);
+
+      let isHold = nvCode === 'H' && !isPastMonth;
+      let isAdd = nvCode === 'A' && isDiffMonth;
+      let isBonus = nvCode === 'B' && !isPastMonth;
+      let isCancel = nvCode === 'C' && isPastMonth;
+
+      // Fallback
+      if (!isHold && !isAdd && !isBonus && !isCancel) {
+        label = String(row["Sheet Source"] || "").toUpperCase() || (val >= 0 ? "ADD" : "HOLD");
+        isBonus = label.includes("BONUS") || label.includes("SUMMER") || label.includes("INSTRUCTORS") || nghiepVu.includes("bonus") || nghiepVu.includes("⏯") || nghiepVu.includes("⏩");
+        isAdd = label.includes("ADD") || 
+                      nghiepVu.includes("add") || 
+                      nghiepVu.includes("release") || 
+                      nghiepVu.includes("unhold") || 
+                      nghiepVu.includes("thanh toán") ||
+                      nghiepVu.includes("paid") ||
+                      isBonus;
+        isHold = (label.includes("HOLD") || nghiepVu.includes("hold")) && !isAdd && !isBonus;
+        isCancel = label.includes("CANCEL") || nghiepVu.includes("cancel") || trangThai.includes("cancel") || ss.toLowerCase().includes("cancel") || tttt.toLowerCase().includes("cancel");
+      }
+
+      const typeLabel = isCancel ? "CANCEL" : (isBonus ? "BONUS" : (isAdd ? "ADD" : "HOLD"));
 
       const command = String(row["Lệnh"] || "").trim().toUpperCase();
       if (command === "-") {
         return;
       }
-      const trangThai = String(row["Tháng phát sinh"] || row["Trạng thái"] || "").toLowerCase();
-      const sheetSource = String(row["Sheet Source"] || "").toLowerCase();
 
       // Skip CANCEL rows in Bulk Payment calculation
       if (nghiepVu === "cancel" || trangThai.includes("cancel") || sheetSource.includes("cancel") || tttt.toLowerCase().includes("cancel")) {
@@ -505,7 +527,7 @@ export function BulkPayment({
 
       if (biz === "AHN_HP") biz = "AHP";
 
-      if (isAdd) {
+      if (isAdd || isBonus) {
         val = Math.abs(val);
       } else {
         val = -Math.abs(val);
@@ -744,14 +766,23 @@ export function BulkPayment({
       }
 
       // Classify
-      const isCancel = nghiepVu.includes("cancel") || trangThai.includes("cancel") || sheetSource.includes("cancel") || tttt.toLowerCase().includes("cancel");
-      const isBonus = r["Sheet Source"]?.toUpperCase().includes("BONUS") || r["Sheet Source"]?.toUpperCase().includes("SUMMER") || r["Sheet Source"]?.toUpperCase().includes("INSTRUCTORS") || nghiepVu.includes("bonus") || nghiepVu.includes("⏯") || nghiepVu.includes("⏩");
-      
-      let isAdd = false;
-      let isHold = false;
-      if (!isCancel && !isBonus) {
-        isAdd = r["Sheet Source"]?.toUpperCase().includes("ADD") || (!r["Sheet Source"]?.toUpperCase().includes("HOLD") && amount > 0) || nghiepVu.includes("add");
-        isHold = !isAdd;
+      const isPastMonth = isPastMonthHold(r, currentMonthNum, currentYearNum);
+      const nvCode = String(r["Nghiệp vụ"] || "").trim().toUpperCase();
+
+      // Rule-based classification (H=Hold current, A=Add past, B=Bonus current, C=Cancel past)
+      let isHold = nvCode === 'H' && !isPastMonth;
+      let isAdd = nvCode === 'A' && isPastMonth;
+      let isBonus = nvCode === 'B' && !isPastMonth;
+      let isCancel = nvCode === 'C' && isPastMonth;
+
+      // Fallback to contains-based if no single letter code matches
+      if (!isHold && !isAdd && !isBonus && !isCancel) {
+        isCancel = nghiepVu.includes("cancel") || trangThai.includes("cancel") || sheetSource.includes("cancel") || tttt.toLowerCase().includes("cancel");
+        isBonus = r["Sheet Source"]?.toUpperCase().includes("BONUS") || r["Sheet Source"]?.toUpperCase().includes("SUMMER") || r["Sheet Source"]?.toUpperCase().includes("INSTRUCTORS") || nghiepVu.includes("bonus") || nghiepVu.includes("⏯") || nghiepVu.includes("⏩");
+        if (!isCancel && !isBonus) {
+          isAdd = r["Sheet Source"]?.toUpperCase().includes("ADD") || (!r["Sheet Source"]?.toUpperCase().includes("HOLD") && amount > 0) || nghiepVu.includes("add");
+          isHold = !isAdd;
+        }
       }
 
       if (amount !== 0) {
@@ -795,7 +826,9 @@ export function BulkPayment({
       finalTotals["AHN"] = (finalTotals["AHN"] || 0) + sheet1Totals["Unknown"];
     }
 
-    let sameMonthHoldAddTotal = 0;
+    let sameMonthHoldTotal = 0;
+    let sameMonthAddTotal = 0;
+    let diffMonthAddTotal = 0;
     let bonusTotal = 0;
 
     holdAddItems.forEach(item => {
@@ -851,8 +884,17 @@ export function BulkPayment({
         }
 
         const isAdd = r["Sheet Source"]?.toUpperCase().includes("ADD") || (!r["Sheet Source"]?.toUpperCase().includes("HOLD") && amount > 0) || nghiepVu.includes("add");
-        const finalSign = isAdd ? 1 : -1;
-        sameMonthHoldAddTotal += finalSign * Math.abs(amount);
+        if (isAdd) {
+          sameMonthAddTotal += Math.abs(amount);
+        } else {
+          sameMonthHoldTotal += Math.abs(amount);
+        }
+      } else if (!isCancel && !isBonus) {
+        let amount = parseMoneyToNumber(r["TOTAL PAYMENT"] || r["Payment Amount"] || r["Grand Total"] || r["GRAND TOTAL"] || r["Total Payment"] || 0);
+        const isAdd = r["Sheet Source"]?.toUpperCase().includes("ADD") || (!r["Sheet Source"]?.toUpperCase().includes("HOLD") && amount > 0) || nghiepVu.includes("add");
+        if (isAdd) {
+          diffMonthAddTotal += Math.abs(amount);
+        }
       }
     });
 
@@ -860,7 +902,9 @@ export function BulkPayment({
       sheet1Totals,
       holdAddItems,
       finalTotals,
-      sameMonthHoldAddTotal,
+      sameMonthHoldTotal,
+      sameMonthAddTotal,
+      diffMonthAddTotal,
       bonusTotal
     };
   }, [appData.Sheet1_AE.data, appData.Hold_AE.data, appData.globalMonth, isMonthInStrComp, monMatchComp, targetMonthLabelComp]);
@@ -1132,6 +1176,12 @@ export function BulkPayment({
           const nv = String(r["Nghiệp vụ"] || "").toUpperCase();
           const tt = String(r["Tháng phát sinh"] || r["Trạng thái"] || "").toUpperCase();
           const tttt = String(r["Tình trạng thanh toán"] || "").toUpperCase();
+          
+          const phatSinhStr = String(r["Tháng phát sinh"] || "").trim().replace(/[-_/]/g, ".");
+          const [mStr, yStr] = phatSinhStr.split(".");
+          const mPhatSinh = parseInt(mStr, 10);
+          const yPhatSinh = parseInt(yStr, 10);
+          const isDiffMonth = !isNaN(mPhatSinh) && !isNaN(yPhatSinh) && (yPhatSinh !== currentYearNum || mPhatSinh !== currentMonthNum);
 
           const isCancel = nv.includes("CANCEL") || tt.includes("CANCEL") || sheetSource.includes("CANCEL") || tttt.includes("CANCEL");
           const isBonus = sheetSource.includes("BONUS") || sheetSource.includes("SUMMER") || sheetSource.includes("INSTRUCTORS") || nv.includes("BONUS") || nv.includes("⏯") || nv.includes("⏩");
@@ -1139,7 +1189,7 @@ export function BulkPayment({
           let isAdd = false;
           let isHold = false;
           if (!isCancel && !isBonus) {
-            isAdd = sheetSource.includes("ADD") || (!sheetSource.includes("HOLD") && amount > 0) || nv.includes("ADD");
+            isAdd = isDiffMonth && (nv.includes("ADD") || sheetSource.includes("ADD"));
             isHold = !isAdd;
           }
 
@@ -1385,15 +1435,13 @@ export function BulkPayment({
       {/* Left Panel - Actions & Info (Unified Scrollable Card) */}
       {showLeftCard && (
         <div 
-          className="w-full xl:w-[350px] bg-white soft-card flex flex-col gap-6 shrink-0 overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 relative select-none rounded-none border-0"
+          className="w-full xl:w-[500px] bg-white soft-card flex flex-col gap-6 shrink-0 overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 relative select-none rounded-[48px] border-0"
           style={{
-            paddingBottom: "0px",
+            paddingBottom: "20px",
             paddingRight: "12px",
             paddingLeft: "12px",
             paddingTop: "12px",
             marginLeft: "0px",
-            borderRadius: "0px",
-            borderWidth: "0px",
           }}
         >
           <div
@@ -1413,27 +1461,29 @@ export function BulkPayment({
                   paddingBottom: "0px",
                 }}
               >
-                <h3 
-                  className="text-[#2b1a0f] font-normal font-serif tracking-tight leading-tight flex items-end gap-1"
+                <h2 
+                  className="text-[#719ea4] font-normal tracking-tight leading-tight flex items-end gap-1"
                   style={{
-                    fontSize: "18px",
+                    fontSize: "25px",
                     lineHeight: "25px",
+                    fontFamily: "Corinthia, cursive",
                   }}
                 >
                   Bulk{" "}
                   <span 
-                    className="not-italic font-script text-primary lowercase"
+                    className="not-italic font-script text-[#7eb5b7] lowercase"
                     style={{ 
                       marginTop: '-4px', 
                       paddingTop: '-3px', 
                       marginBottom: '-1px',
-                      fontSize: "24px",
-                      lineHeight: "32px",
+                      fontSize: "44px",
+                      lineHeight: "38px",
+                      paddingLeft: "5px",
                     }}
                   >
                     payment
                   </span>
-                </h3>
+                </h2>
                 <p 
                   className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-[0.15em]"
                   style={{ marginTop: "0px" }}
@@ -1519,7 +1569,7 @@ export function BulkPayment({
                       Object.entries(dynamicReportStats.sheet1Totals).map(([biz, amount]) => (
                         <div key={biz} className="flex items-center justify-between text-[10px] py-1 px-1.5 bg-white/60 rounded border border-white/80">
                           <span className="font-bold text-slate-600">{biz}</span>
-                          <span className="font-mono text-emerald-600 font-semibold">{formatMoneyVND(amount).replace(" ₫", "")}</span>
+                          <span className="font-sans text-emerald-600 font-semibold">{formatMoneyVND(amount).replace(" ₫", "")}</span>
                         </div>
                       ))
                     ) : (
@@ -1535,42 +1585,50 @@ export function BulkPayment({
                   </h5>
                   <div className="space-y-1 max-h-[160px] overflow-y-auto custom-scrollbar pr-0.5">
                     {dynamicReportStats.holdAddItems.length > 0 ? (
-                      dynamicReportStats.holdAddItems.map((item, idx) => {
-                        const isAdd = item.type === 'ADD';
-                        const isBonusItem = item.type === 'BONUS';
-                        const isCancelItem = item.type === 'CANCEL';
+                      (() => {
+                        const aggregated = dynamicReportStats.holdAddItems.reduce((acc, item) => {
+                          const key = `${item.biz}-${item.type}`;
+                          if (!acc[key]) {
+                            acc[key] = { biz: item.biz, type: item.type, amount: 0 };
+                          }
+                          acc[key].amount += item.amount;
+                          return acc;
+                        }, {} as Record<string, { biz: string; type: string; amount: number }>);
                         
-                        let badgeClass = "bg-rose-50 text-rose-600 border-rose-200/50";
-                        let badgeLabel = "HOLD";
-                        if (isAdd) {
-                          badgeClass = "bg-emerald-50 text-emerald-600 border-emerald-200/50";
-                          badgeLabel = "ADD";
-                        } else if (isBonusItem) {
-                          badgeClass = "bg-amber-50 text-amber-600 border-amber-200/50";
-                          badgeLabel = "BONUS";
-                        } else if (isCancelItem) {
-                          badgeClass = "bg-slate-100 text-slate-500 border-slate-200";
-                          badgeLabel = "CANCEL (SUM=0)";
-                        }
-
-                        const moneyColor = (isAdd || isBonusItem) ? "text-emerald-600" : (isCancelItem ? "text-slate-400 line-through" : "text-rose-600");
-                        const moneyPrefix = (isAdd || isBonusItem) ? "+" : "";
-
-                        return (
-                          <div key={idx} className="flex flex-col gap-0.5 text-[9px] p-1.5 bg-white/60 rounded border border-white/80 shadow-sm">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5 max-w-[70%]">
-                                <span className="font-bold text-slate-700 truncate">{item.biz} ({item.month})</span>
+                        return Object.values(aggregated).map((item, idx) => {
+                          const isAdd = item.type === 'ADD';
+                          const isBonusItem = item.type === 'BONUS';
+                          const isCancelItem = item.type === 'CANCEL';
+                          
+                          let badgeClass = "bg-rose-50 text-rose-600 border-rose-200/50";
+                          let badgeLabel = "HOLD";
+                          if (isAdd) {
+                            badgeClass = "bg-emerald-50 text-emerald-600 border-emerald-200/50";
+                            badgeLabel = "ADD";
+                          } else if (isBonusItem) {
+                            badgeClass = "bg-amber-50 text-amber-600 border-amber-200/50";
+                            badgeLabel = "BONUS";
+                          } else if (isCancelItem) {
+                            badgeClass = "bg-slate-100 text-slate-500 border-slate-200";
+                            badgeLabel = "CANCEL";
+                          }
+  
+                          const moneyColor = (isAdd || isBonusItem) ? "text-emerald-600" : (isCancelItem ? "text-slate-400 line-through" : "text-rose-600");
+                          const moneyPrefix = (isAdd || isBonusItem) ? "+" : "";
+  
+                          return (
+                            <div key={idx} className="flex items-center justify-between p-1.5 bg-white/60 rounded border border-white/80 shadow-sm transition-all hover:bg-white/90">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-slate-700 truncate">{item.biz}</span>
                                 <span className={`text-[7px] font-extrabold px-1 py-0.5 rounded border leading-none shrink-0 ${badgeClass}`}>{badgeLabel}</span>
                               </div>
-                              <span className={`font-mono font-bold shrink-0 ${moneyColor}`}>
+                              <span className={`font-sans font-bold shrink-0 ${moneyColor}`}>
                                 {moneyPrefix}{formatMoneyVND(item.amount).replace(" ₫", "")}
                               </span>
                             </div>
-                            <span className="text-[8px] text-slate-500 truncate" title={item.reason}>{item.reason}</span>
-                          </div>
-                        );
-                      })
+                          );
+                        });
+                      })()
                     ) : (
                       <div className="text-[9px] text-slate-400 italic px-1">Không có khoản Hold/Add/Bonus nào</div>
                     )}
@@ -1586,7 +1644,7 @@ export function BulkPayment({
                     {Object.entries(dynamicReportStats.finalTotals).map(([biz, amount]) => (
                       <div key={biz} className="flex items-center justify-between text-[10px] py-1 px-1.5 bg-slate-100 rounded border border-slate-200/50">
                         <span className="font-bold text-slate-700">{biz}</span>
-                        <span className="font-mono text-emerald-600 font-bold">{formatMoneyVND(amount).replace(" ₫", "")}</span>
+                        <span className="font-sans text-emerald-600 font-bold">{formatMoneyVND(amount).replace(" ₫", "")}</span>
                       </div>
                     ))}
                   </div>
@@ -1612,9 +1670,15 @@ export function BulkPayment({
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#7D5A50]">HOLD/ADD (CÙNG THÁNG):</span>
-                    <span className="text-xs font-bold text-[#7D5A50]">
-                      {formatMoneyVND(dynamicReportStats.sameMonthHoldAddTotal).replace(" ₫", "")}
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500">HOLD (CÙNG THÁNG):</span>
+                    <span className="text-xs font-bold text-rose-600">
+                      -{formatMoneyVND(dynamicReportStats.sameMonthHoldTotal).replace(" ₫", "")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">ADD (KHÁC THÁNG):</span>
+                    <span className="text-xs font-bold text-emerald-600">
+                      +{formatMoneyVND(dynamicReportStats.diffMonthAddTotal).replace(" ₫", "")}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -1706,7 +1770,7 @@ export function BulkPayment({
               </p>
             </div>
           ) : (
-            <div className="flex-1 min-h-0 bg-white relative z-10 flex flex-col">
+            <div className="flex-1 min-h-0 bg-white relative z-10 flex flex-col rounded-none border-0 overflow-hidden">
               <DataTable
                 columns={columns}
                 data={appData.BankExport.data}
