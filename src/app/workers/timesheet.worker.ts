@@ -126,7 +126,7 @@ export function calculateTimesheet(params: any) {
     if (fromDateStr && toDateStr) {
       if (rawDateStr < fromDateStr) {
         const nextYearDate = new Date(rawDate);
-        nextYearDate.setUTCFullYear(rawDate.getUTCFullYear() + 1);
+        nextYearDate.setFullYear(rawDate.getFullYear() + 1);
         const nextYearStr = toVietnamDateString(nextYearDate);
         if (nextYearStr >= fromDateStr && nextYearStr <= toDateStr) {
           rawDate = nextYearDate;
@@ -134,7 +134,7 @@ export function calculateTimesheet(params: any) {
         }
       } else if (rawDateStr > toDateStr) {
         const prevYearDate = new Date(rawDate);
-        prevYearDate.setUTCFullYear(rawDate.getUTCFullYear() - 1);
+        prevYearDate.setFullYear(rawDate.getFullYear() - 1);
         const prevYearStr = toVietnamDateString(prevYearDate);
         if (prevYearStr >= fromDateStr && prevYearStr <= toDateStr) {
           rawDate = prevYearDate;

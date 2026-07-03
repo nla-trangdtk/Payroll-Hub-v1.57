@@ -1,5 +1,5 @@
 import React from "react";
-import appLogo from "@/assets/images/regenerated_image_1783006196550.png";
+import appLogo from "@/assets/images/regenerated_image_1782997666816.jpg";
 import webLogo from "@/assets/images/web_logo.jpg";
 
 interface PuppyLogoProps {

@@ -234,6 +234,14 @@ export function TimesheetHub() {
     setSearchTerm("");
     setTargetDate("");
     setTargetCenter("");
+    setFromDate("");
+    setToDate("");
+    setDebouncedFromDate("");
+    setDebouncedToDate("");
+    updateAppData((prev) => ({
+      ...prev,
+      Timesheet_Dates: { from: "", to: "" },
+    }), false);
     navigate(location.pathname, {
       replace: true,
       state: { from: "cleared" },
@@ -241,7 +249,7 @@ export function TimesheetHub() {
     if (tableRef.current) {
       tableRef.current.clearAllFilters();
     }
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, updateAppData]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -644,6 +652,123 @@ export function TimesheetHub() {
 
   const tableRef = useRef<any>(null);
 
+  const handleFetchFromSupabase = useCallback(async (isSilent = false) => {
+    if (!isSupabaseConfigured()) {
+      if (!isSilent) {
+        toast.error("Supabase chưa được cấu hình! Vui lòng cài đặt URL và Anon Key trong phần cấu hình.");
+      }
+      return;
+    }
+
+    const loadToastId = !isSilent ? toast.loading("Đang tải dữ liệu từ Supabase...") : null;
+
+    try {
+      // Fetch roster_cham_cong
+      const { data: dbRoster, error: rosterErr } = await supabase
+        .from("roster_cham_cong")
+        .select("*");
+        
+      // Fetch nhan_vien
+      const { data: dbStaff, error: staffErr } = await supabase
+        .from("nhan_vien")
+        .select("*");
+
+      // Fetch thang_luong
+      const { data: dbSalary, error: salaryErr } = await supabase
+        .from("thang_luong")
+        .select("*");
+
+      if (rosterErr || staffErr || salaryErr) {
+        throw new Error("Không thể truy vấn các bảng dữ liệu trên Supabase. Vui lòng kiểm tra lại cấu hình hoặc mã SQL.");
+      }
+
+      if ((dbRoster || []).length === 0 && (dbStaff || []).length === 0 && (dbSalary || []).length === 0) {
+        if (!isSilent) {
+          toast.warning("Dữ liệu trên Supabase hiện đang trống. Hãy bấm 'Đồng bộ Supabase' trước để đẩy dữ liệu lên.");
+        }
+        if (loadToastId) toast.dismiss(loadToastId);
+        return;
+      }
+
+      // Map Roster rows
+      const mappedRoster = (dbRoster || []).map((row: any) => ({
+        ...(row.raw_data || {}),
+        _rowId: row.unique_id || `supa-r-${row.id}`,
+        _uuid: row.unique_id || `supa-u-${row.id}`,
+        _sourceFile: row.raw_data?._sourceFile || "Supabase_Live",
+        center: row.l07 || "",
+        l07: row.l07 || "",
+        business: row.business || "",
+        ma_nv: row.ma_nv || "",
+        full_name: row.full_name || "",
+        ngay: row.ngay || "",
+        type: row.type || "",
+        class: row.class || "",
+        gio_vao: row.gio_vao || "",
+        gio_ra: row.gio_ra || "",
+        duration: Number(row.duration) || 0,
+        notes: row.notes || "",
+        employeeId: row.ma_nv || "",
+        fullName: row.full_name || "",
+        maAE: row.l07 || "",
+        date: row.ngay || "",
+        taskType: row.type || "",
+        classCode: row.class || "",
+        from: row.gio_vao || "",
+        to: row.gio_ra || "",
+        chargeToCenterMkt: row.charge_to_center_mkt || ""
+      }));
+
+      // Map Staff rows
+      const mappedStaff = (dbStaff || []).map((row: any) => ({
+        ...(row.raw_data || {}),
+        _rowId: row.unique_id,
+        employeeId: row.employee_id,
+        fullName: row.full_name,
+        bankAccountNumber: row.bank_account_number,
+        salaryScale: row.salary_scale,
+        business: row.business,
+        center: row.center,
+        from: row.from,
+        to: row.to,
+        className: row.class_name,
+        noteDays: row.note_days
+      }));
+
+      // Map Salary scale rows
+      const mappedSalary = (dbSalary || []).map((row: any) => ({
+        ...(row.raw_data || {}),
+        _rowId: row.unique_id,
+        sCode: row.s_code,
+        academicPrice: Number(row.academic_price) || 0,
+        baseSalary: Number(row.base_salary) || 0,
+        totalSalary: Number(row.total_salary) || 0,
+        deductionHours: Number(row.deduction_hours) || 0
+      }));
+
+      hasFetchedSupabase = true;
+
+      updateAppData((prev) => ({
+        ...prev,
+        Q_Roster: mappedRoster,
+        Q_Staff: mappedStaff,
+        Q_Salary_Scale: mappedSalary,
+        updatedAt: new Date().toISOString()
+      }), true);
+
+      if (loadToastId) {
+        toast.dismiss(loadToastId);
+        toast.success(`Đã lấy dữ liệu từ Supabase về ứng dụng thành công (${mappedRoster.length} dòng Roster, ${mappedStaff.length} Nhân viên)!`);
+      }
+    } catch (err: any) {
+      console.error("Error fetching Supabase data:", err);
+      if (loadToastId) {
+        toast.dismiss(loadToastId);
+        toast.error(`Không thể lấy dữ liệu từ Supabase: ${err.message}`);
+      }
+    }
+  }, [updateAppData]);
+
   const handleSaveData = useCallback(async () => {
     updateAppData((prev: any) => ({
       ...prev,
@@ -659,24 +784,31 @@ export function TimesheetHub() {
   }, [updateAppData, handleSyncToSupabase]);
 
   const handleRestoreOriginal = useCallback(async () => {
-    const confirmReset = window.confirm(
-      "Bạn có chắc chắn muốn khôi phục dữ liệu ban đầu không? Toàn bộ thay đổi của bạn trên bảng Roster sẽ bị xóa và dữ liệu sẽ được đồng bộ lại với Supabase.",
-    );
-    if (!confirmReset) return;
-
-    if (!isSupabaseConfigured()) {
-      updateAppData((prev) => ({
-        ...prev,
-        Q_Roster: [...INITIAL_APP_DATA.Q_Roster],
-        Q_Staff: INITIAL_APP_DATA.Q_Staff ? [...INITIAL_APP_DATA.Q_Staff] : [],
-        Q_Salary_Scale: INITIAL_APP_DATA.Q_Salary_Scale ? [...INITIAL_APP_DATA.Q_Salary_Scale] : [],
-        Q_Cache: INITIAL_APP_DATA.Q_Cache ? [...INITIAL_APP_DATA.Q_Cache] : [],
-      }), true);
-      toast.success("Đã khôi phục dữ liệu ban đầu offline thành công!");
-      return;
+    if (isSupabaseConfigured()) {
+      const choice = window.confirm(
+        "BẠN CÓ MUỐN LẤY LẠI DỮ LIỆU ĐÃ ĐỒNG BỘ TRÊN SUPABASE KHÔNG?\n\n" +
+        "- Bấm OK: Để khôi phục bằng cách tải dữ liệu đã lưu từ Supabase về ứng dụng (An toàn, khuyên dùng).\n" +
+        "- Bấm Cancel (Hủy): Để khôi phục hoàn toàn về DỮ LIỆU MẪU BAN ĐẦU (Sẽ XÓA SẠCH toàn bộ dữ liệu hiện tại trên Supabase và tải lại dữ liệu mẫu)."
+      );
+      
+      if (choice) {
+        await handleFetchFromSupabase();
+        return;
+      }
+      
+      const confirmForceReset = window.confirm(
+        "CẢNH BÁO NGUY HIỂM: Bạn đã chọn khôi phục về DỮ LIỆU MẪU BAN ĐẦU.\n\n" +
+        "Thao tác này sẽ XÓA SẠCH TOÀN BỘ dữ liệu của bạn trên Supabase để ghi đè dữ liệu mẫu ban đầu. Bạn có thực sự muốn tiếp tục không?"
+      );
+      if (!confirmForceReset) return;
+    } else {
+      const confirmReset = window.confirm(
+        "Bạn có chắc chắn muốn khôi phục dữ liệu mẫu ban đầu không? Toàn bộ thay đổi của bạn sẽ bị xóa.",
+      );
+      if (!confirmReset) return;
     }
 
-    const loadToastId = toast.loading("Đang khôi phục và đồng bộ dữ liệu với Supabase...");
+    const loadToastId = toast.loading("Đang xóa dữ liệu Supabase và đồng bộ lại dữ liệu mẫu...");
 
     try {
       // 1. Clear old data on Supabase
@@ -728,7 +860,7 @@ export function TimesheetHub() {
         setShowSqlDialog(true);
       }
     }
-  }, [updateAppData]);
+  }, [updateAppData, handleFetchFromSupabase]);
 
   const handleRosterCellChange = useCallback((row: any, colKey: string, value: any) => {
     updateAppData((prev) => {
@@ -868,6 +1000,14 @@ export function TimesheetHub() {
                     >
                       <Save className="w-4 h-4 text-sky-500" />
                       <span>Lưu dữ liệu thay đổi</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onSelect={() => handleFetchFromSupabase()}
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer text-xs font-bold text-indigo-600 hover:bg-indigo-50"
+                    >
+                      <RefreshCw className="w-4 h-4 text-indigo-500" />
+                      <span>Lấy dữ liệu từ Supabase</span>
                     </DropdownMenuItem>
 
                     <DropdownMenuItem

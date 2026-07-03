@@ -633,6 +633,15 @@ export function BulkPayment({
       (sum, r) => {
         const rowMonthStr = String(r["Tháng báo cáo"] || r["_fileMonth"] || r["Tháng"] || r["Month"] || "").trim();
         if (!isSameMonthForSumIf(rowMonthStr, currentMonthVal)) return sum;
+        
+        const nv = String(r["Nghiệp vụ"] || "").toLowerCase();
+        const tt = String(r["Tháng phát sinh"] || r["Trạng thái"] || "").toLowerCase();
+        const ss = String(r["Sheet Source"] || "").toLowerCase();
+        const tttt = String(r["Tình trạng thanh toán"] || "").toLowerCase();
+        if (nv.includes("cancel") || tt.includes("cancel") || ss.includes("cancel") || tttt.includes("cancel")) {
+          return sum;
+        }
+
         let amount = parseMoneyToNumber(r["TOTAL PAYMENT"] || r["Payment Amount"] || r["Grand Total"] || r["GRAND TOTAL"] || r["Total Payment"] || 0);
         if (isPastMonthHold(r, currentMonthNum, currentYearNum)) {
           amount = 0;
@@ -1022,24 +1031,42 @@ export function BulkPayment({
         0
       );
       
-      const holdAddItems: { month: string; biz: string; reason: string; amount: number; type: 'HOLD' | 'ADD' | 'CANCEL' }[] = [];
+      const holdAddItems: { month: string; biz: string; reason: string; amount: number; type: 'HOLD' | 'ADD' }[] = [];
       const holdTotal = appData.Hold_AE.data.reduce(
         (sum, r) => {
           const rowMonthStr = String(r["Tháng báo cáo"] || r["_fileMonth"] || r["Tháng"] || r["Month"] || "").trim();
           if (!isSameMonthForSumIf(rowMonthStr, currentMonthVal)) return sum;
+          
+          const nv = String(r["Nghiệp vụ"] || "").toUpperCase();
+          const tt = String(r["Tháng phát sinh"] || r["Trạng thái"] || "").toUpperCase();
+          const ss = String(r["Sheet Source"] || "").toUpperCase();
+          const tttt = String(r["Tình trạng thanh toán"] || "").toUpperCase();
+          if (nv.includes("CANCEL") || tt.includes("CANCEL") || ss.includes("CANCEL") || tttt.includes("CANCEL")) {
+            return sum;
+          }
+
           let amount = parseMoneyToNumber(r["TOTAL PAYMENT"] || r["Payment Amount"] || r["Grand Total"] || r["GRAND TOTAL"] || r["Total Payment"] || 0);
           if (isPastMonthHold(r, currentMonthNum, currentYearNum)) {
             amount = 0;
           }
           
           if (amount !== 0) {
-            let biz = r["Business"] || "Unknown";
+            let biz = r["Business"] || r["BU"] || "Unknown";
             if (biz === "AHN_HP") biz = "AHP";
-            const nv = String(r["Nghiệp vụ"] || "").trim().toUpperCase();
-            const tt = String(r["Trạng thái"] || "").trim().toUpperCase();
-            const isCancel = nv.includes("CANCEL") || tt.includes("CANCEL");
-            const isAdd = !isCancel && (nv.includes("ADD") || tt.includes("ADD") || tt.includes("THANH TOÁN THÊM") || amount > 0);
-            const itemType = isCancel ? 'CANCEL' : isAdd ? 'ADD' : 'HOLD';
+            
+            if (biz === "Unknown" || !biz || biz === "UNKNOWN") {
+              const textToMatch = [ r["Sheet Source"], r["CENTER NOTE"], r["Mã ae"], r["Note"], r["Full name"] ]
+                .map(v => String(v || "").toUpperCase()).join(" ");
+              if (textToMatch.includes("HN") || textToMatch.includes("AHN")) biz = "AHN";
+              else if (textToMatch.includes("AHP") || textToMatch.includes("HAIPHONG")) biz = "AHP";
+              else if (textToMatch.includes("ATH") || textToMatch.includes("THANH HOA")) biz = "ATH";
+              else if (textToMatch.includes("ATN") || textToMatch.includes("THAI NGUYEN")) biz = "ATN";
+              else if (textToMatch.includes("APT") || textToMatch.includes("PHU THO")) biz = "APT";
+              else biz = "AHN";
+            }
+
+            const isAdd = r["Sheet Source"]?.toUpperCase().includes("ADD") || (!r["Sheet Source"]?.toUpperCase().includes("HOLD") && amount > 0) || nv.includes("ADD");
+            const itemType = isAdd ? 'ADD' : 'HOLD';
             holdAddItems.push({
               month: String(r["Tháng phát sinh"] || r["Tháng báo cáo"] || "").trim(),
               biz,
