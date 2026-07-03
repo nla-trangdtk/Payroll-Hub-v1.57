@@ -2119,6 +2119,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
             {
               borderWidth: "0px",
               borderStyle: "none",
+              borderRadius: "0px",
               "--table-padding": densityStyles[rowDensity].padding,
               "--font-size": densityStyles[rowDensity].fontSize,
               "--header-font-size": densityStyles[rowDensity].headerFontSize,

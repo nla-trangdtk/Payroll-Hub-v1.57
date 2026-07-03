@@ -384,17 +384,21 @@ export function calculateTimesheet(params: any) {
   const finalize = (groupObj: Record<string, any>) => Object.values(groupObj).map((row: any, index) => {
     const deductionHours = (row.inClass + row.inClassAtls + row.clubActivity + row.parentMeeting) / 2;
     let mktHours = row.supportMkt || 0;
-    Object.keys(row).forEach((k) => { if (k.startsWith("lpar") || k.startsWith("lret") || k.startsWith("ldem") || k.startsWith("ldec") || k.startsWith("moth")) mktHours += row[k] || 0; });
-    const otherAdminHours = row.adminHours - mktHours;
+    Object.keys(row).forEach((k) => { 
+      if (k.startsWith("lpar") || k.startsWith("lret") || k.startsWith("ldem") || k.startsWith("ldec")) {
+        mktHours += row[k] || 0; 
+      }
+    });
+    const otherAdminHours = row.adminHours - mktHours - (row.other || 0) - (row.moth01 || 0);
     const isMktLocal = row.center === "MKT LOCAL NORTH" || row.center === "MKT LOCAL SOUTH" || (row.center && typeof row.center === "string" && row.center.startsWith("MKT LOCAL NORTH_")) || row.l07 === "MKT LOCAL NORTH" || row.l07 === "MKT LOCAL SOUTH" || (row.l07 && typeof row.l07 === "string" && row.l07.startsWith("MKT LOCAL NORTH_"));
     let rawTotalSalary = 0, baseSalary = 0, totalSalary = 0, cMktLocal = 0, chargeLxo = 0, cEc = 0, cPtDemo = 0, cRenewal = 0, cDiscovery = 0, cSummerOuting = 0, cSummerInstructors = 0;
-    const chargeOther = row.other * row.adRate;
+    const chargeOther = ((row.other || 0) + (row.moth01 || 0)) * 20000;
     if (isMktLocal) { rawTotalSalary = row.totalHours * 20000; totalSalary = Math.round(rawTotalSalary); baseSalary = totalSalary; cMktLocal = totalSalary; }
     else {
-      rawTotalSalary = row.academicHours * row.acRate + (otherAdminHours - deductionHours) * row.adRate + mktHours * 20000 + row.summer * row.suRate + row.outing * row.ouRate + row.discoveryCamp * row.suRate + row.other * row.adRate + row.summerInstructors * row.siRate;
+      rawTotalSalary = row.academicHours * row.acRate + (otherAdminHours - deductionHours) * row.adRate + mktHours * 20000 + row.summer * row.suRate + row.outing * row.ouRate + row.discoveryCamp * row.suRate + chargeOther + row.summerInstructors * row.siRate;
       totalSalary = Math.round(rawTotalSalary); baseSalary = rawTotalSalary - row.discoveryCamp * row.suRate; cEc = Math.round(row.supportEc * row.adRate); cPtDemo = Math.round(row.demo * row.acRate) + Math.round(row.pt * row.adRate); cMktLocal = Math.round(mktHours * 20000); cRenewal = Math.round(Math.round((row.prepareLessonClubs + row.renewalProjects) * row.adRate) + row.clubActivity * row.acRate - (row.clubActivity / 2) * row.adRate); cDiscovery = Math.round(row.discoveryCamp * row.suRate); cSummerOuting = Math.round(row.summer * row.suRate) + Math.round(row.outing * row.ouRate); cSummerInstructors = Math.round(row.summerInstructors * row.siRate); chargeLxo = totalSalary - cSummerOuting - cPtDemo - cEc - cMktLocal - cRenewal - cDiscovery - cSummerInstructors - chargeOther;
     }
-    return { ...row, id: index + 1, deductionHours, baseSalary, totalSalary, chargeLxo, chargeEc: cEc, chargePtDemo: cPtDemo, chargeMktLocal: cMktLocal, chargeRenewalProjects: cRenewal, chargeDiscoveryCamp: cDiscovery, chargeSummerOuting: cSummerOuting, chargeSummerInstructors: cSummerInstructors };
+    return { ...row, id: index + 1, deductionHours, baseSalary, totalSalary, chargeLxo, chargeEc: cEc, chargePtDemo: cPtDemo, chargeMktLocal: cMktLocal, chargeOther, chargeRenewalProjects: cRenewal, chargeDiscoveryCamp: cDiscovery, chargeSummerOuting: cSummerOuting, chargeSummerInstructors: cSummerInstructors };
   });
 
   const normalizeSearchStr = (s: string) => s ? s.toLowerCase().replace(/đ/g, "d").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "") : "";
@@ -403,7 +407,7 @@ export function calculateTimesheet(params: any) {
   finalize(cenGroup).forEach((c) => {
     const key = c.l07;
     if (!cenAggregate[key]) cenAggregate[key] = { ...c };
-    else { cenAggregate[key].totalSalary += c.totalSalary; cenAggregate[key].chargeLxo += c.chargeLxo; cenAggregate[key].chargeEc += c.chargeEc; cenAggregate[key].chargePtDemo += c.chargePtDemo; cenAggregate[key].chargeMktLocal += c.chargeMktLocal; cenAggregate[key].chargeRenewalProjects += c.chargeRenewalProjects; cenAggregate[key].chargeDiscoveryCamp += c.chargeDiscoveryCamp; cenAggregate[key].chargeSummerOuting += c.chargeSummerOuting; cenAggregate[key].chargeSummerInstructors += c.chargeSummerInstructors; cenAggregate[key].totalHours += c.totalHours; }
+    else { cenAggregate[key].totalSalary += c.totalSalary; cenAggregate[key].chargeLxo += c.chargeLxo; cenAggregate[key].chargeEc += c.chargeEc; cenAggregate[key].chargePtDemo += c.chargePtDemo; cenAggregate[key].chargeMktLocal += c.chargeMktLocal; cenAggregate[key].chargeOther += c.chargeOther; cenAggregate[key].chargeRenewalProjects += c.chargeRenewalProjects; cenAggregate[key].chargeDiscoveryCamp += c.chargeDiscoveryCamp; cenAggregate[key].chargeSummerOuting += c.chargeSummerOuting; cenAggregate[key].chargeSummerInstructors += c.chargeSummerInstructors; cenAggregate[key].totalHours += c.totalHours; }
   });
 
   const cenResult = Object.values(cenAggregate);

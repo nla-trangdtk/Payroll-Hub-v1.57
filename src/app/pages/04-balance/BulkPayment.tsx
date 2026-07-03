@@ -135,7 +135,7 @@ const isSameMonthForSumIf = (rowMonthRaw?: string, workMonthRaw?: string): boole
     // Try matching formats like "tháng 3/2026", etc via regex
     const match = s.match(/(tháng|thg)?\s*(\d{1,2})\s*([./-])\s*(\d{4})/i);
     if (match) {
-      return { month: parseInt(match[2], 10), year: parseInt(match[3], 10) };
+      return { month: parseInt(match[2], 10), year: parseInt(match[4], 10) };
     }
     
     return null;
@@ -159,7 +159,7 @@ const isSameMonthForSumIf = (rowMonthRaw?: string, workMonthRaw?: string): boole
 const isPastMonthHold = (row: any, currentMonthNum: number, currentYearNum: number): boolean => {
   if (!row) return false;
 
-  const phatSinh = String(row["Tháng phát sinh"] || "").trim();
+  const phatSinh = String(row["Tháng phát sinh"] || "").trim().replace(/[-_/]/g, ".");
   const parts = phatSinh.split(".");
   if (parts.length === 2) {
     const m = parseInt(parts[0], 10);
@@ -447,8 +447,15 @@ export function BulkPayment({
       let val = parseMoneyToNumber(row["TOTAL PAYMENT"] || row["Grand Total"] || row["GRAND TOTAL"] || row["Payment Amount"] || 0);
       const nghiepVu = String(row["Nghiệp vụ"] || "").toLowerCase();
       const label = String(row["Sheet Source"] || "").toUpperCase() || (val >= 0 ? "ADD" : "HOLD");
-      const isHold = label.includes("HOLD") || nghiepVu.includes("hold");
-      const isAdd = label.includes("ADD") || (!isHold && val > 0) || nghiepVu.includes("add");
+      const isBonus = label.includes("BONUS") || label.includes("SUMMER") || label.includes("INSTRUCTORS") || nghiepVu.includes("bonus") || nghiepVu.includes("⏯") || nghiepVu.includes("⏩");
+      const isAdd = label.includes("ADD") || 
+                    nghiepVu.includes("add") || 
+                    nghiepVu.includes("release") || 
+                    nghiepVu.includes("unhold") || 
+                    nghiepVu.includes("thanh toán") ||
+                    nghiepVu.includes("paid") ||
+                    isBonus;
+      const isHold = (label.includes("HOLD") || nghiepVu.includes("hold")) && !isAdd && !isBonus;
 
       const command = String(row["Lệnh"] || "").trim().toUpperCase();
       if (command === "-") {
@@ -498,9 +505,7 @@ export function BulkPayment({
 
       if (biz === "AHN_HP") biz = "AHP";
 
-      if (isPastMonthHold(row, currentMonthNum, currentYearNum)) {
-        val = 0;
-      } else if (isAdd) {
+      if (isAdd) {
         val = Math.abs(val);
       } else {
         val = -Math.abs(val);
@@ -632,21 +637,25 @@ export function BulkPayment({
     const holdTotal = appData.Hold_AE.data.reduce(
       (sum, r) => {
         const rowMonthStr = String(r["Tháng báo cáo"] || r["_fileMonth"] || r["Tháng"] || r["Month"] || "").trim();
-        if (!isSameMonthForSumIf(rowMonthStr, currentMonthVal)) return sum;
-        
-        const nv = String(r["Nghiệp vụ"] || "").toLowerCase();
-        const tt = String(r["Tháng phát sinh"] || r["Trạng thái"] || "").toLowerCase();
-        const ss = String(r["Sheet Source"] || "").toLowerCase();
-        const tttt = String(r["Tình trạng thanh toán"] || "").toLowerCase();
-        if (nv.includes("cancel") || tt.includes("cancel") || ss.includes("cancel") || tttt.includes("cancel")) {
-          return sum;
-        }
+        const extracted = monMatchComp(rowMonthStr);
+        if (extracted && extracted !== targetMonthLabelComp) return sum;
+        if (!extracted && rowMonthStr && !isMonthInStrComp(rowMonthStr)) return sum;
 
+        const nv = String(r["Nghiệp vụ"] || "").toLowerCase();
+        const ss = String(r["Sheet Source"] || "").toLowerCase();
+        const tt = String(r["Tháng phát sinh"] || r["Trạng thái"] || "").toLowerCase();
+        
+        // Sync with dynamicReportStats filtering
+        if (isPastMonthHold(r, currentMonthNum, currentYearNum)) return sum;
+        if (nv === "cancel" || tt.includes("cancel") || ss.includes("cancel")) return sum;
+        if (ss.includes("sheet 1 ae") || ss.includes("sheet 1")) return sum;
+        if (r._dimmed) return sum;
+
+        const isAdd = ss.toUpperCase().includes("ADD") || (!ss.toUpperCase().includes("HOLD") && !nv.toUpperCase().includes("HOLD")) || nv.includes("add") || nv.includes("release");
         let amount = parseMoneyToNumber(r["TOTAL PAYMENT"] || r["Payment Amount"] || r["Grand Total"] || r["GRAND TOTAL"] || r["Total Payment"] || 0);
-        if (isPastMonthHold(r, currentMonthNum, currentYearNum)) {
-          amount = 0;
-        }
-        return sum + amount;
+        amount = Math.abs(amount);
+        
+        return sum + (isAdd ? amount : -amount);
       },
       0
     );
@@ -703,8 +712,8 @@ export function BulkPayment({
       sheet1Totals[biz] = (sheet1Totals[biz] || 0) + amount;
     });
 
-    // II. SỐ TIỀN HOLD/ADD
-    const holdAddItems: { month: string; biz: string; reason: string; amount: number; type: 'HOLD' | 'ADD' | 'CANCEL' }[] = [];
+    // II. SỐ TIỀN HOLD/ADD/BONUS THEO MỤC
+    const holdAddItems: { month: string; biz: string; reason: string; amount: number; type: 'HOLD' | 'ADD' | 'CANCEL' | 'BONUS' }[] = [];
     appData.Hold_AE.data.forEach((r) => {
       const rowMonthStr = String(r["Tháng báo cáo"] || r["_fileMonth"] || r["Tháng"] || r["Month"] || "").trim();
       const extracted = monMatchComp(rowMonthStr);
@@ -724,11 +733,6 @@ export function BulkPayment({
       const sheetSource = String(r["Sheet Source"] || "").toLowerCase();
       const tttt = String(r["Tình trạng thanh toán"] || "").trim();
 
-      // Skip CANCEL rows
-      if (nghiepVu === "cancel" || trangThai.includes("cancel") || sheetSource.includes("cancel") || tttt.toLowerCase().includes("cancel")) {
-        return;
-      }
-
       // Exclude values imported from 'sheet 1 ae' inside Hold AE
       if (sheetSource.includes("sheet 1 ae") || sheetSource.includes("sheet 1")) {
         return;
@@ -737,6 +741,17 @@ export function BulkPayment({
       // Skip other-month active hold rows
       if (r._dimmed) {
         return;
+      }
+
+      // Classify
+      const isCancel = nghiepVu.includes("cancel") || trangThai.includes("cancel") || sheetSource.includes("cancel") || tttt.toLowerCase().includes("cancel");
+      const isBonus = r["Sheet Source"]?.toUpperCase().includes("BONUS") || r["Sheet Source"]?.toUpperCase().includes("SUMMER") || r["Sheet Source"]?.toUpperCase().includes("INSTRUCTORS") || nghiepVu.includes("bonus") || nghiepVu.includes("⏯") || nghiepVu.includes("⏩");
+      
+      let isAdd = false;
+      let isHold = false;
+      if (!isCancel && !isBonus) {
+        isAdd = r["Sheet Source"]?.toUpperCase().includes("ADD") || (!r["Sheet Source"]?.toUpperCase().includes("HOLD") && amount > 0) || nghiepVu.includes("add");
+        isHold = !isAdd;
       }
 
       if (amount !== 0) {
@@ -754,14 +769,15 @@ export function BulkPayment({
           else biz = "AHN";
         }
 
-        const isAdd = r["Sheet Source"]?.toUpperCase().includes("ADD") || (!r["Sheet Source"]?.toUpperCase().includes("HOLD") && amount > 0) || nghiepVu.includes("add");
-        const itemType: 'HOLD' | 'ADD' = isAdd ? 'ADD' : 'HOLD';
+        const itemType = isCancel ? 'CANCEL' : (isBonus ? 'BONUS' : (isAdd ? 'ADD' : 'HOLD'));
+        const finalSign = (isCancel || isHold) ? -1 : 1;
+        const signedVal = finalSign * Math.abs(amount);
 
         holdAddItems.push({
           month: String(r["Tháng phát sinh"] || r["Tháng báo cáo"] || r["Tháng"] || r["Month"] || "").trim(),
           biz,
           reason: String(r["Nghiệp vụ"] || r["Ghi chú"] || "N/A"),
-          amount: Math.abs(amount),
+          amount: signedVal,
           type: itemType
         });
       }
@@ -774,17 +790,78 @@ export function BulkPayment({
       finalTotals[bu] = sheet1Totals[bu] || 0;
     });
 
+    // Handle Unknown BU if any
+    if (sheet1Totals["Unknown"]) {
+      finalTotals["AHN"] = (finalTotals["AHN"] || 0) + sheet1Totals["Unknown"];
+    }
+
+    let sameMonthHoldAddTotal = 0;
+    let bonusTotal = 0;
+
     holdAddItems.forEach(item => {
       if (!finalTotals[item.biz]) {
         finalTotals[item.biz] = 0;
       }
-      finalTotals[item.biz] += (item.type === 'ADD' ? item.amount : -item.amount);
+      
+      // CANCEL contribution is 0, others are direct sum of their signed amount!
+      const contribution = item.type === 'CANCEL' ? 0 : item.amount;
+      finalTotals[item.biz] += contribution;
+
+      if (item.type === 'BONUS') {
+        bonusTotal += item.amount;
+      }
+    });
+
+    // Merge any remaining Unknown into AHN
+    if (finalTotals["Unknown"]) {
+      finalTotals["AHN"] = (finalTotals["AHN"] || 0) + finalTotals["Unknown"];
+      delete finalTotals["Unknown"];
+    }
+
+    // Second pass on Hold_AE data for the requested same-month total (EXCLUDING CANCEL AND BONUS)
+    appData.Hold_AE.data.forEach((r) => {
+      const rowMonthStr = String(r["Tháng báo cáo"] || r["_fileMonth"] || r["Tháng"] || r["Month"] || "").trim();
+      const extractedBaoCao = monMatchComp(rowMonthStr);
+      if (extractedBaoCao && extractedBaoCao !== targetMonthLabelComp) return;
+      if (!extractedBaoCao && rowMonthStr && !isMonthInStrComp(rowMonthStr)) return;
+
+      const phatSinhStr = String(r["Tháng phát sinh"] || r["Tháng báo cáo"] || r["Tháng"] || r["Month"] || "").trim();
+      const extractedPhatSinh = monMatchComp(phatSinhStr);
+
+      const command = String(r["Lệnh"] || "").trim().toUpperCase();
+      if (command === "-") return;
+
+      const sheetSource = String(r["Sheet Source"] || "").toLowerCase();
+      if (sheetSource.includes("sheet 1 ae") || sheetSource.includes("sheet 1")) return;
+      if (r._dimmed) return;
+
+      const nghiepVu = String(r["Nghiệp vụ"] || "").toLowerCase();
+      const trangThai = String(r["Tháng phát sinh"] || r["Trạng thái"] || "").toLowerCase();
+      const tttt = String(r["Tình trạng thanh toán"] || "").trim();
+
+      const isCancel = nghiepVu.includes("cancel") || trangThai.includes("cancel") || sheetSource.includes("cancel") || tttt.toLowerCase().includes("cancel");
+      const isBonus = r["Sheet Source"]?.toUpperCase().includes("BONUS") || r["Sheet Source"]?.toUpperCase().includes("SUMMER") || r["Sheet Source"]?.toUpperCase().includes("INSTRUCTORS") || nghiepVu.includes("bonus") || nghiepVu.includes("⏯") || nghiepVu.includes("⏩");
+
+      if (extractedBaoCao === extractedPhatSinh && extractedBaoCao) {
+        let amount = parseMoneyToNumber(r["TOTAL PAYMENT"] || r["Payment Amount"] || r["Grand Total"] || r["GRAND TOTAL"] || r["Total Payment"] || 0);
+        if (isPastMonthHold(r, currentMonthNum, currentYearNum)) amount = 0;
+
+        if (isCancel || isBonus) {
+          return;
+        }
+
+        const isAdd = r["Sheet Source"]?.toUpperCase().includes("ADD") || (!r["Sheet Source"]?.toUpperCase().includes("HOLD") && amount > 0) || nghiepVu.includes("add");
+        const finalSign = isAdd ? 1 : -1;
+        sameMonthHoldAddTotal += finalSign * Math.abs(amount);
+      }
     });
 
     return {
       sheet1Totals,
       holdAddItems,
-      finalTotals
+      finalTotals,
+      sameMonthHoldAddTotal,
+      bonusTotal
     };
   }, [appData.Sheet1_AE.data, appData.Hold_AE.data, appData.globalMonth, isMonthInStrComp, monMatchComp, targetMonthLabelComp]);
 
@@ -1031,25 +1108,41 @@ export function BulkPayment({
         0
       );
       
-      const holdAddItems: { month: string; biz: string; reason: string; amount: number; type: 'HOLD' | 'ADD' }[] = [];
+      const holdAddItems: { month: string; biz: string; reason: string; amount: number; type: 'HOLD' | 'ADD' | 'CANCEL' | 'BONUS' }[] = [];
       const holdTotal = appData.Hold_AE.data.reduce(
         (sum, r) => {
           const rowMonthStr = String(r["Tháng báo cáo"] || r["_fileMonth"] || r["Tháng"] || r["Month"] || "").trim();
           if (!isSameMonthForSumIf(rowMonthStr, currentMonthVal)) return sum;
-          
-          const nv = String(r["Nghiệp vụ"] || "").toUpperCase();
-          const tt = String(r["Tháng phát sinh"] || r["Trạng thái"] || "").toUpperCase();
-          const ss = String(r["Sheet Source"] || "").toUpperCase();
-          const tttt = String(r["Tình trạng thanh toán"] || "").toUpperCase();
-          if (nv.includes("CANCEL") || tt.includes("CANCEL") || ss.includes("CANCEL") || tttt.includes("CANCEL")) {
+
+          const command = String(r["Lệnh"] || "").trim().toUpperCase();
+          if (command === "-") return sum;
+
+          const sheetSource = String(r["Sheet Source"] || "").toUpperCase();
+          if (sheetSource.includes("SHEET 1 AE") || sheetSource.includes("SHEET 1")) {
             return sum;
           }
+
+          if (r._dimmed) return sum;
 
           let amount = parseMoneyToNumber(r["TOTAL PAYMENT"] || r["Payment Amount"] || r["Grand Total"] || r["GRAND TOTAL"] || r["Total Payment"] || 0);
           if (isPastMonthHold(r, currentMonthNum, currentYearNum)) {
             amount = 0;
           }
-          
+
+          const nv = String(r["Nghiệp vụ"] || "").toUpperCase();
+          const tt = String(r["Tháng phát sinh"] || r["Trạng thái"] || "").toUpperCase();
+          const tttt = String(r["Tình trạng thanh toán"] || "").toUpperCase();
+
+          const isCancel = nv.includes("CANCEL") || tt.includes("CANCEL") || sheetSource.includes("CANCEL") || tttt.includes("CANCEL");
+          const isBonus = sheetSource.includes("BONUS") || sheetSource.includes("SUMMER") || sheetSource.includes("INSTRUCTORS") || nv.includes("BONUS") || nv.includes("⏯") || nv.includes("⏩");
+
+          let isAdd = false;
+          let isHold = false;
+          if (!isCancel && !isBonus) {
+            isAdd = sheetSource.includes("ADD") || (!sheetSource.includes("HOLD") && amount > 0) || nv.includes("ADD");
+            isHold = !isAdd;
+          }
+
           if (amount !== 0) {
             let biz = r["Business"] || r["BU"] || "Unknown";
             if (biz === "AHN_HP") biz = "AHP";
@@ -1065,24 +1158,32 @@ export function BulkPayment({
               else biz = "AHN";
             }
 
-            const isAdd = r["Sheet Source"]?.toUpperCase().includes("ADD") || (!r["Sheet Source"]?.toUpperCase().includes("HOLD") && amount > 0) || nv.includes("ADD");
-            const itemType = isAdd ? 'ADD' : 'HOLD';
+            const itemType = isCancel ? 'CANCEL' : (isBonus ? 'BONUS' : (isAdd ? 'ADD' : 'HOLD'));
+            const finalSign = (isCancel || isHold) ? -1 : 1;
+            const signedVal = finalSign * Math.abs(amount);
+
             holdAddItems.push({
               month: String(r["Tháng phát sinh"] || r["Tháng báo cáo"] || "").trim(),
               biz,
               reason: String(r["Nghiệp vụ"] || r["Ghi chú"] || "N/A"),
-              amount: Math.abs(amount),
+              amount: signedVal,
               type: itemType
             });
           }
-          return sum + amount;
+
+          // Return the contribution of this row to holdTotal:
+          // CANCEL rows contribute 0
+          const contribution = (isCancel) ? 0 : ((isHold) ? -Math.abs(amount) : Math.abs(amount));
+          return sum + contribution;
         },
         0
       );
       
       const finalTotals: Record<string, number> = { ...sheet1Totals };
       holdAddItems.forEach(item => {
-        finalTotals[item.biz] = (finalTotals[item.biz] || 0) + (item.type === 'ADD' ? item.amount : -item.amount);
+        // CANCEL contribution is 0, others are direct sum of their signed amount!
+        const contribution = item.type === 'CANCEL' ? 0 : item.amount;
+        finalTotals[item.biz] = (finalTotals[item.biz] || 0) + contribution;
       });
 
       const calculatedTotal = sheet1Total + holdTotal;
@@ -1279,20 +1380,26 @@ export function BulkPayment({
       initial="hidden"
       animate="visible"
       className="flex-1 w-full min-h-0 flex flex-col xl:flex-row gap-6 md:gap-8 bg-transparent p-4 md:p-6 overflow-hidden"
+      style={{ marginLeft: "0px" }}
     >
       {/* Left Panel - Actions & Info (Unified Scrollable Card) */}
       {showLeftCard && (
         <div 
-          className="w-full xl:w-[350px] bg-white soft-card flex flex-col gap-6 shrink-0 overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 relative select-none"
+          className="w-full xl:w-[350px] bg-white soft-card flex flex-col gap-6 shrink-0 overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 relative select-none rounded-none border-0"
           style={{
             paddingBottom: "0px",
             paddingRight: "12px",
             paddingLeft: "12px",
             paddingTop: "12px",
             marginLeft: "0px",
+            borderRadius: "0px",
+            borderWidth: "0px",
           }}
         >
-          <div className="absolute inset-0 pattern-dots opacity-[0.05] border-transparent pointer-events-none rounded-[2rem] overflow-hidden" />
+          <div
+            className="absolute inset-0 pattern-dots opacity-[0.05] border-transparent pointer-events-none rounded-[2rem] overflow-hidden"
+            style={{ marginBottom: "8px", paddingLeft: "24px" }}
+          />
 
           {/* Integrated Header with Close Button */}
           <div className="flex items-center justify-between w-full relative z-10">
@@ -1384,6 +1491,10 @@ export function BulkPayment({
                 </div>
                 
                 <div className="flex justify-between items-center px-2 pt-2 border-t border-slate-200/60 mt-1">
+                  <span className="text-[10px] font-bold text-[#7D5A50]">BONUS (⏯):</span>
+                  <span className="text-[11px] font-bold text-[#7D5A50]">{formatMoneyVND(dynamicReportStats.bonusTotal).replace(" ₫", "")}</span>
+                </div>
+                <div className="flex justify-between items-center px-2 pt-1 border-t border-slate-200/60 mt-1">
                   <span className="text-[10px] font-bold text-slate-600">BANK NORTH (AHN+AHP):</span>
                   <span className="text-[11px] font-bold text-slate-800">{formatMoneyVND(holdPaymentDetails.bankNorthT5).replace(" ₫", "")}</span>
                 </div>
@@ -1417,21 +1528,43 @@ export function BulkPayment({
                   </div>
                 </div>
 
-                {/* II. SỐ TIỀN HOLD/ADD THEO TỪNG MỤC */}
+                {/* II. SỐ TIỀN HOLD/ADD/BONUS THEO TỪNG MỤC */}
                 <div className="mt-2 pt-2.5 border-t border-slate-200/60">
                   <h5 className="text-[0.625rem] font-bold uppercase tracking-[0.1em] text-slate-800 mb-1.5 flex items-center gap-1">
-                    <span className="text-primary">II.</span> SỐ TIỀN HOLD/ADD THEO MỤC
+                    <span className="text-primary">II.</span> SỐ TIỀN HOLD/ADD/BONUS THEO MỤC
                   </h5>
                   <div className="space-y-1 max-h-[160px] overflow-y-auto custom-scrollbar pr-0.5">
                     {dynamicReportStats.holdAddItems.length > 0 ? (
                       dynamicReportStats.holdAddItems.map((item, idx) => {
                         const isAdd = item.type === 'ADD';
+                        const isBonusItem = item.type === 'BONUS';
+                        const isCancelItem = item.type === 'CANCEL';
+                        
+                        let badgeClass = "bg-rose-50 text-rose-600 border-rose-200/50";
+                        let badgeLabel = "HOLD";
+                        if (isAdd) {
+                          badgeClass = "bg-emerald-50 text-emerald-600 border-emerald-200/50";
+                          badgeLabel = "ADD";
+                        } else if (isBonusItem) {
+                          badgeClass = "bg-amber-50 text-amber-600 border-amber-200/50";
+                          badgeLabel = "BONUS";
+                        } else if (isCancelItem) {
+                          badgeClass = "bg-slate-100 text-slate-500 border-slate-200";
+                          badgeLabel = "CANCEL (SUM=0)";
+                        }
+
+                        const moneyColor = (isAdd || isBonusItem) ? "text-emerald-600" : (isCancelItem ? "text-slate-400 line-through" : "text-rose-600");
+                        const moneyPrefix = (isAdd || isBonusItem) ? "+" : "";
+
                         return (
-                          <div key={idx} className="flex flex-col gap-0.5 text-[9px] p-1.5 bg-white/60 rounded border border-white/80">
+                          <div key={idx} className="flex flex-col gap-0.5 text-[9px] p-1.5 bg-white/60 rounded border border-white/80 shadow-sm">
                             <div className="flex items-center justify-between">
-                              <span className="font-bold text-slate-700">{item.biz} ({item.month})</span>
-                              <span className={`font-mono font-bold ${isAdd ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                {isAdd ? '+' : '-'}{formatMoneyVND(item.amount).replace(" ₫", "")}
+                              <div className="flex items-center gap-1.5 max-w-[70%]">
+                                <span className="font-bold text-slate-700 truncate">{item.biz} ({item.month})</span>
+                                <span className={`text-[7px] font-extrabold px-1 py-0.5 rounded border leading-none shrink-0 ${badgeClass}`}>{badgeLabel}</span>
+                              </div>
+                              <span className={`font-mono font-bold shrink-0 ${moneyColor}`}>
+                                {moneyPrefix}{formatMoneyVND(item.amount).replace(" ₫", "")}
                               </span>
                             </div>
                             <span className="text-[8px] text-slate-500 truncate" title={item.reason}>{item.reason}</span>
@@ -1439,7 +1572,7 @@ export function BulkPayment({
                         );
                       })
                     ) : (
-                      <div className="text-[9px] text-slate-400 italic px-1">Không có khoản Hold/Add nào</div>
+                      <div className="text-[9px] text-slate-400 italic px-1">Không có khoản Hold/Add/Bonus nào</div>
                     )}
                   </div>
                 </div>
@@ -1470,6 +1603,18 @@ export function BulkPayment({
                     <span className="text-[10px] font-bold uppercase tracking-widest text-primary">TỔNG TIỀN ACC:</span>
                     <span className="text-xs font-bold text-primary">
                       {formatMoneyVND(calculationSummary.calculatedTotal).replace(" ₫", "")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#7D5A50]">BONUS (⏯):</span>
+                    <span className="text-xs font-bold text-[#7D5A50]">
+                      {formatMoneyVND(dynamicReportStats.bonusTotal).replace(" ₫", "")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#7D5A50]">HOLD/ADD (CÙNG THÁNG):</span>
+                    <span className="text-xs font-bold text-[#7D5A50]">
+                      {formatMoneyVND(dynamicReportStats.sameMonthHoldAddTotal).replace(" ₫", "")}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">

@@ -277,9 +277,11 @@ interface BuRow {
   add: number;
   hold: number;
   cancel: number;
+  bonus: number;
   rawAdd: number;
   rawHold: number;
   rawCancel: number;
+  rawBonus: number;
   rawHoldPending: number;
   ghiChu: string;
   confirmed: boolean;
@@ -737,9 +739,11 @@ export function HoldAddDashboard() {
           add: 0,
           hold: 0,
           cancel: 0,
+          bonus: 0,
           rawAdd: 0,
           rawHold: 0,
           rawCancel: 0,
+          rawBonus: 0,
           rawHoldPending: 0,
           ghiChu: "",
           lenh: "",
@@ -891,8 +895,12 @@ export function HoldAddDashboard() {
       const ss = String(r["Sheet Source"] || "").toLowerCase();
       let type = "add";
 
+      // If Trạng thái or Nghiệp vụ contains bonus
+      if (nv.includes("bonus") || nv.includes("⏯") || nv.includes("⏩") || ss.includes("bonus") || ss.includes("summer") || ss.includes("instructors")) {
+        type = "bonus";
+      }
       // If Trạng thái or Nghiệp vụ contains cancel, or Tình trạng thanh toán contains cancel
-      if (nv.includes("cancel") || st.includes("cancel") || ss.includes("cancel") || ttttUpper.includes("CANCEL")) {
+      else if (nv.includes("cancel") || st.includes("cancel") || ss.includes("cancel") || ttttUpper.includes("CANCEL")) {
         type = "cancel";
       }
       // Khong dua gia tri sheet 1 ae vao cot luong hold
@@ -1000,9 +1008,9 @@ export function HoldAddDashboard() {
         }
       }
 
-      if (type === "hold" || type === "add" || type === "cancel") {
+      if (type === "hold" || type === "add" || type === "cancel" || type === "bonus") {
         const label =
-          type === "hold" ? "Hold" : type === "add" ? "Add" : "Cancel";
+          type === "hold" ? "Hold" : type === "add" ? "Add" : type === "cancel" ? "Cancel" : "Bonus";
         const descriptionMonth = formatAdjustmentMonth(
           rawThangPhatSinh || displayMonth || month,
         );
@@ -1023,9 +1031,11 @@ export function HoldAddDashboard() {
           add: 0,
           hold: 0,
           cancel: 0,
+          bonus: 0,
           rawAdd: 0,
           rawHold: 0,
           rawCancel: 0,
+          rawBonus: 0,
           rawHoldPending: 0,
           ghiChu: "",
           confirmed: false,
@@ -1053,6 +1063,8 @@ export function HoldAddDashboard() {
         if (!buStats[key].ghiChu) {
           buStats[key].ghiChu = "cancel";
         }
+      } else if (type === "bonus") {
+        buStats[key].rawBonus += tpRaw;
       } else if (type === "hold") {
         buStats[key].rawHold += tpRaw;
         const tttt = String(
@@ -1088,6 +1100,7 @@ export function HoldAddDashboard() {
       if (s.rawCancel !== undefined) s.cancel = s.rawCancel;
       if (s.rawHold !== undefined) s.hold = s.rawHold;
       if (s.rawAdd !== undefined) s.add = s.rawAdd;
+      if (s.rawBonus !== undefined) s.bonus = s.rawBonus;
       if (s.rawOpenHold !== undefined) s.openHold = s.rawOpenHold;
     });
 
@@ -1109,9 +1122,11 @@ export function HoldAddDashboard() {
           add: 0,
           hold: 0,
           cancel: 0,
+          bonus: 0,
           rawAdd: 0,
           rawHold: 0,
           rawCancel: 0,
+          rawBonus: 0,
           rawHoldPending: 0,
           ghiChu: "",
           confirmed: false,
@@ -1700,6 +1715,7 @@ export function HoldAddDashboard() {
         addAmt: number;
         holdAmt: number;
         cancelAmt: number;
+        bonusAmt: number;
       }
     > = {};
 
@@ -1768,6 +1784,8 @@ export function HoldAddDashboard() {
         .reduce((s, e) => s + Math.abs(e.hold), 0);
       const cancelAmt = rowsThisMonth
         .reduce((s, e) => s + Math.abs(e.cancel), 0);
+      const bonusAmt = rowsThisMonth
+        .reduce((s, e) => s + Math.abs(e.bonus), 0);
 
       totals[mk] = {
         openBal: Math.abs(openBal),
@@ -1777,6 +1795,7 @@ export function HoldAddDashboard() {
         addAmt,
         holdAmt,
         cancelAmt,
+        bonusAmt,
       };
     });
 
@@ -2042,7 +2061,17 @@ export function HoldAddDashboard() {
                   style={{ color: "#e65100" }}
                 >
                   {fmt(cancelPillValue)}
-                </span>?</span>
+                </span>
+              </span>
+              <span className="text-[11px] bg-secondary border border-border rounded-full px-3 py-1 text-foreground flex items-center gap-1.5 shadow-sm">
+                <span className="text-muted-foreground font-medium">Bonus</span>
+                <span
+                  className="font-nunito font-bold text-indigo-600"
+                  style={{ color: "#3f51b5" }}
+                >
+                  {fmt(bonusPillValue)}
+                </span>
+              </span>
             </div>
           </div>
           {/* Controls */}
@@ -2216,7 +2245,7 @@ export function HoldAddDashboard() {
                 </th>
                 <th
                   className="bg-[#F3EFE0] text-[#2b1a0f] border-r border-b border-[#e6dfd3] px-3 py-2 text-center font-bold text-[0.85em] uppercase tracking-[0.2em]"
-                  colSpan={3}
+                  colSpan={4}
                 >
                   Tạm tính
                 </th>
@@ -2262,6 +2291,9 @@ export function HoldAddDashboard() {
                 <th className="bg-[#F3EFE0] text-[#2b1a0f] border-r border-b border-[#e6dfd3] px-3 py-1.5 text-center font-bold text-[0.8em] uppercase tracking-[0.1em] whitespace-nowrap min-w-[100px]">
                   Cancel
                 </th>
+                <th className="bg-[#F3EFE0] text-[#2b1a0f] border-r border-b border-[#e6dfd3] px-3 py-1.5 text-center font-bold text-[0.8em] uppercase tracking-[0.1em] whitespace-nowrap min-w-[100px]">
+                  Bonus
+                </th>
               </tr>
             </thead>
 
@@ -2281,23 +2313,25 @@ export function HoldAddDashboard() {
                 return monthKeys.map((mk, mi) => {
                   const rows = grouped.get(mk) || [];
 
-                  const {
-                    openBal,
-                    psThu,
-                    psChi,
-                    closeBal,
-                    addAmt,
-                    holdAmt,
-                    cancelAmt,
-                  } = computedMonthTotals[mk] || {
-                    openBal: 0,
-                    psThu: 0,
-                    psChi: 0,
-                    closeBal: 0,
-                    addAmt: 0,
-                    holdAmt: 0,
-                    cancelAmt: 0,
-                  };
+                    const {
+                      openBal,
+                      psThu,
+                      psChi,
+                      closeBal,
+                      addAmt,
+                      holdAmt,
+                      cancelAmt,
+                      bonusAmt,
+                    } = computedMonthTotals[mk] || {
+                      openBal: 0,
+                      psThu: 0,
+                      psChi: 0,
+                      closeBal: 0,
+                      addAmt: 0,
+                      holdAmt: 0,
+                      cancelAmt: 0,
+                      bonusAmt: 0,
+                    };
                   const isOpen = expanded.has(mk);
 
                   return [
@@ -2343,6 +2377,9 @@ export function HoldAddDashboard() {
                       </td>
                       <td className="border-r border-b border-[#e6dfd3] p-3 text-right text-slate-950 dark:text-white font-black !bg-[#E5ECF6] dark:!bg-slate-800/80 whitespace-nowrap text-[13px]">
                         {cancelAmt !== 0 ? fmt(cancelAmt) : "0"}
+                      </td>
+                      <td className="border-r border-b border-[#e6dfd3] p-3 text-right text-slate-950 dark:text-white font-black !bg-[#E5ECF6] dark:!bg-slate-800/80 whitespace-nowrap text-[13px]">
+                        {bonusAmt !== 0 ? fmt(bonusAmt) : "0"}
                       </td>
                       <td className="border-r border-[#e6dfd3] border-b border-[#e6dfd3] !bg-[#E5ECF6] dark:!bg-slate-800/80 whitespace-nowrap"></td>
                       <td className="border-r border-[#e6dfd3] border-b border-[#e6dfd3] !bg-[#E5ECF6] dark:!bg-slate-800/80 min-w-[200px]"></td>
@@ -2490,15 +2527,26 @@ export function HoldAddDashboard() {
                                   "0"
                                 )}
                               </td>
+                              <td className="border-r border-b border-[#e6dfd3] p-2 text-right whitespace-nowrap min-w-[80px] text-[13px]">
+                                {e.bonus !== 0 ? (
+                                  <span className="text-indigo-600 dark:text-indigo-400 font-normal">
+                                    {fmt(e.bonus)}
+                                  </span>
+                                ) : (
+                                  "0"
+                                )}
+                              </td>
                               <td className="border-r border-b border-[#e6dfd3] p-1.5 text-center whitespace-nowrap text-[13px]">
                                 {(() => {
                                   const isInteractive =
                                     (e.rawAdd || 0) !== 0 ||
                                     (e.rawHold || 0) !== 0 ||
                                     (e.rawCancel || 0) !== 0 ||
+                                    (e.rawBonus || 0) !== 0 ||
                                     (e.add || 0) !== 0 ||
                                     (e.hold || 0) !== 0 ||
-                                    (e.cancel || 0) !== 0;
+                                    (e.cancel || 0) !== 0 ||
+                                    (e.bonus || 0) !== 0;
 
                                   if (!isInteractive) {
                                     return (

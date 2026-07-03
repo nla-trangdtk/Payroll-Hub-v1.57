@@ -2,7 +2,40 @@ import { useState, useCallback } from "react";
 import { useAppData } from "../lib/contexts/AppDataContext";
 import { toast } from "sonner";
 import { getCenterInfoByAECode } from "../lib/utils/center-utils";
-import { parseMoneyToNumber } from "../lib/utils/data-utils";
+import { parseMoneyToNumber, removeVietnameseTones } from "../lib/utils/data-utils";
+
+function cleanIDNumber(val: unknown): string {
+  if (val === undefined || val === null) return "";
+  let str = String(val).trim();
+  if (typeof val === "number") {
+    if (str.includes("E") || str.includes("e") || str.includes("+")) {
+      str = val.toLocaleString("fullwide", { useGrouping: false });
+    }
+    if (str.includes(".")) {
+      str = str.split(".")[0];
+    }
+  } else {
+    if (str.includes("E") || str.includes("e")) {
+      const num = Number(str);
+      if (!isNaN(num)) {
+        str = num.toLocaleString("fullwide", { useGrouping: false });
+      }
+    }
+    if (str.includes(".")) {
+      const parts = str.split(".");
+      if (parts[1] === "0" || parts[1] === "00" || /^[0]+$/.test(parts[1])) {
+        str = parts[0];
+      }
+    }
+  }
+  return str;
+}
+
+function cleanFullName(val: unknown): string {
+  if (val === undefined || val === null) return "";
+  const str = String(val).trim();
+  return removeVietnameseTones(str).toUpperCase();
+}
 
 export type MasterAETab =
   | "Sheet1_AE"
@@ -87,18 +120,31 @@ export function useMasterAELogic() {
         const data = [...targetTab.data];
         const rowIndex = data.findIndex(
           (r, idx) =>
-            (row._originalIndex !== undefined && idx === row._originalIndex) ||
-            (r.id && row.id && r.id === row.id) ||
-            r === row ||
-            (r["ID Number"] === row["ID Number"] &&
-              r["TOTAL PAYMENT"] === row["TOTAL PAYMENT"] &&
-              ((r["No."] !== undefined && r["No."] === row["No."]) ||
-                (r["No"] !== undefined && r["No"] === row["No"]) || 
-                (r["STT"] !== undefined && r["STT"] === row["STT"])))
+            r && row &&
+            ((row._originalIndex !== undefined && idx === row._originalIndex) ||
+              (r.id && row.id && r.id === row.id) ||
+              r === row ||
+              (r["ID Number"] === row["ID Number"] &&
+                r["TOTAL PAYMENT"] === row["TOTAL PAYMENT"] &&
+                ((r["No."] !== undefined && r["No."] === row["No."]) ||
+                  (r["No"] !== undefined && r["No"] === row["No"]) || 
+                  (r["STT"] !== undefined && r["STT"] === row["STT"]))))
         );
         if (rowIndex === -1) return prev;
         
-        const updatedRow = { ...data[rowIndex], [columnKey]: value };
+        let finalValue = value;
+        const colKeyUpper = String(columnKey || "").toUpperCase();
+        if (colKeyUpper.includes("ID NUMBER") || colKeyUpper === "ID" || colKeyUpper === "CCCD" || colKeyUpper === "MÃ AE") {
+          finalValue = cleanIDNumber(value);
+        } else if (
+          colKeyUpper.includes("FULL NAME") ||
+          colKeyUpper.includes("BENEFICIARY NAME") ||
+          colKeyUpper.includes("HỌ VÀ TÊN")
+        ) {
+          finalValue = cleanFullName(value);
+        }
+
+        const updatedRow = { ...data[rowIndex], [columnKey]: finalValue };
         if (tab === "Hold_AE" && (columnKey === "Nghiệp vụ" || columnKey === "Tháng phát sinh" || columnKey === "Trạng thái")) {
           const valUpper = String(updatedRow["Nghiệp vụ"] || "").toUpperCase();
           const currentTotalPayment = parseMoneyToNumber(updatedRow["TOTAL PAYMENT"] || 0);
@@ -135,11 +181,12 @@ export function useMasterAELogic() {
         const data = [...targetTab.data];
         const rowIndex = data.findIndex(
           (r, idx) =>
-            (rowToDelete._originalIndex !== undefined && idx === rowToDelete._originalIndex) ||
-            (r.id && rowToDelete.id && r.id === rowToDelete.id) ||
-            r === rowToDelete ||
-            (r["ID Number"] === rowToDelete["ID Number"] &&
-              r["TOTAL PAYMENT"] === rowToDelete["TOTAL PAYMENT"])
+            r && rowToDelete &&
+            ((rowToDelete._originalIndex !== undefined && idx === rowToDelete._originalIndex) ||
+              (r.id && rowToDelete.id && r.id === rowToDelete.id) ||
+              r === rowToDelete ||
+              (r["ID Number"] === rowToDelete["ID Number"] &&
+                r["TOTAL PAYMENT"] === rowToDelete["TOTAL PAYMENT"]))
         );
         if (rowIndex === -1) return prev;
         
@@ -163,12 +210,13 @@ export function useMasterAELogic() {
         if (!targetTab || !("data" in targetTab)) return prev;
 
         const data = [...targetTab.data].filter(r => {
-          return !rowsToDelete.some(rowToDelete => 
-            (rowToDelete._originalIndex !== undefined && targetTab.data.indexOf(r) === rowToDelete._originalIndex) ||
-            (r.id && rowToDelete.id && r.id === rowToDelete.id) ||
-            r === rowToDelete ||
-            (r["ID Number"] === rowToDelete["ID Number"] &&
-             r["TOTAL PAYMENT"] === rowToDelete["TOTAL PAYMENT"])
+          return r && !rowsToDelete.some(rowToDelete => 
+            rowToDelete &&
+            ((rowToDelete._originalIndex !== undefined && targetTab.data.indexOf(r) === rowToDelete._originalIndex) ||
+              (r.id && rowToDelete.id && r.id === rowToDelete.id) ||
+              r === rowToDelete ||
+              (r["ID Number"] === rowToDelete["ID Number"] &&
+               r["TOTAL PAYMENT"] === rowToDelete["TOTAL PAYMENT"]))
           );
         });
 

@@ -22,6 +22,8 @@ export const EMPLOYEE_COLUMNS = [
   { key: "from", label: "From", type: "date" as const, width: 100, cellClassName: "text-slate-400" },
   { key: "to", label: "To", type: "date" as const, width: 100, cellClassName: "text-slate-400" },
   ...BASE_TASK_COLUMNS,
+  { key: "chargeMktLocal", label: "Charge MKT Local", type: "currency" as const, width: 150, cellClassName: "bg-emerald-50/50 font-bold text-emerald-700" },
+  { key: "chargeOther", label: "Charge to Other", type: "currency" as const, width: 150, cellClassName: "bg-amber-50/50 font-bold text-amber-700" },
   { key: "className", label: "Class Name", type: "text" as const, width: 150, cellClassName: "font-bold text-slate-500 italic" },
   { key: "noteDays", label: "Note", type: "text" as const, width: 220, cellClassName: "text-slate-800 whitespace-pre-wrap leading-relaxed font-medium" },
 ];
@@ -74,6 +76,8 @@ export function getDynamicEmployeeColumns(_rosterData: Record<string, unknown>[]
     { key: "from", label: "From", type: "date" as const, width: 100, cellClassName: "text-slate-400" },
     { key: "to", label: "To", type: "date" as const, width: 100, cellClassName: "text-slate-400" },
     ...baseTaskCols,
+    { key: "chargeMktLocal", label: "Charge MKT Local", type: "currency" as const, width: 150, cellClassName: "bg-emerald-50/50 font-bold text-emerald-700" },
+    { key: "chargeOther", label: "Charge to Other", type: "currency" as const, width: 150, cellClassName: "bg-amber-50/50 font-bold text-amber-700" },
     { key: "className", label: "Class Name", type: "text" as const, width: 150, cellClassName: "font-bold text-slate-500 italic" },
     { key: "noteDays", label: "Note", type: "text" as const, width: 220, cellClassName: "text-slate-800 whitespace-pre-wrap leading-relaxed font-medium" },
   ];

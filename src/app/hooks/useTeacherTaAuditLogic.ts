@@ -41,6 +41,8 @@ export function useTeacherTaAuditLogic(rosterData: any[], fromDate: string, toDa
         workbook = XLSX.read(buffer, { type: "array", raw: true });
       }
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const bonusSheetName = workbook.SheetNames.find(s => s.toUpperCase().includes("SUMMER INSTRUCTORS BONUS"));
+      const bonusDataRaw = bonusSheetName ? XLSX.utils.sheet_to_json(workbook.Sheets[bonusSheetName], { header: 1, defval: "", raw: false }) : null;
 
       const rawData = XLSX.utils.sheet_to_json(firstSheet, {
         header: 1,
@@ -52,6 +54,8 @@ export function useTeacherTaAuditLogic(rosterData: any[], fromDate: string, toDa
         ...prev,
         Q_TeacherHours: rawData,
         Q_TeacherHoursFileName: fileName,
+        Q_BonusData: bonusDataRaw,
+        Q_BonusSheetName: bonusSheetName || "Bonus",
       }));
     } catch (error) {
       console.error("Lỗi upload file A:", error);
@@ -261,6 +265,9 @@ export function useTeacherTaAuditLogic(rosterData: any[], fromDate: string, toDa
       workerRef.current = null;
     };
 
+    const bonusData = appData.Q_BonusData || null;
+    const bonusSheetNameActual = appData.Q_TeacherHoursFileName?.includes("Bonus") ? "Summer Instructors Bonus" : (appData.Q_BonusSheetName || "Bonus");
+
     worker.postMessage({
       fileAData,
       rosterData,
@@ -269,12 +276,14 @@ export function useTeacherTaAuditLogic(rosterData: any[], fromDate: string, toDa
       checkTAsDataRaw,
       fileNameA,
       centerMappingParam,
+      bonusData,
+      bonusSheetName: bonusSheetNameActual
     });
 
     return () => {
       if (workerRef.current) { workerRef.current.terminate(); workerRef.current = null; }
     };
-  }, [fileAData, rosterData, fromDate, toDate, checkTAsDataRaw, fileNameA, fuzzyThreshold, centerMappingParam]);
+  }, [fileAData, rosterData, fromDate, toDate, checkTAsDataRaw, fileNameA, fuzzyThreshold, centerMappingParam, appData.Q_BonusData, appData.Q_TeacherHoursFileName, appData.Q_BonusSheetName]);
 
   const fileNameB = appData.Q_RosterFileName || "";
   const fileNameConfig = appData.Q_CheckTAsFileName || "";

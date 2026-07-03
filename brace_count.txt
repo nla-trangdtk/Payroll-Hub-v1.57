@@ -1,0 +1,160 @@
+61: 0 |   const [isLoading, setIsLoading] = useState(true);
+62: 0 | 
+63: 0 |   // ── Load from storage on mount ──
+64: 1 |   useEffect(() => {
+65: 2 |     const loadData = async () => {
+66: 3 |       try {
+67: 3 |         let saved = await localforage.getItem<AppData>(STORAGE_KEY);
+68: 4 |         if (!saved) {
+69: 4 |           const legacySaved = localStorage.getItem(STORAGE_KEY);
+70: 5 |           if (legacySaved) {
+71: 6 |             try {
+72: 6 |               saved = JSON.parse(legacySaved);
+73: 6 |               await localforage.setItem(STORAGE_KEY, saved);
+74: 6 |             } catch (e) {
+75: 6 |               console.error("Failed to parse legacy data", e);
+76: 5 |             }
+77: 4 |           }
+78: 3 |         }
+79: 3 | 
+80: 4 |         if (saved) {
+81: 4 |           // One-time reset migration to bring Month 1/2026 back to the unsaved state
+82: 4 |           let loadedAndReset = false;
+83: 4 |           if (
+84: 4 |             saved.SavedPeriods_HoldAdd &&
+85: 4 |             (saved.SavedPeriods_HoldAdd["Tháng 1/2026"] ||
+86: 4 |               saved.SavedPeriods_HoldAdd["Tháng 01/2026"])
+87: 5 |           ) {
+88: 5 |             delete saved.SavedPeriods_HoldAdd["Tháng 1/2026"];
+89: 5 |             delete saved.SavedPeriods_HoldAdd["Tháng 01/2026"];
+90: 5 |             loadedAndReset = true;
+91: 4 |           }
+92: 4 |           if (
+93: 4 |             saved.SavedRows_HoldAdd &&
+94: 4 |             (saved.SavedRows_HoldAdd["Tháng 1/2026"] ||
+95: 4 |               saved.SavedRows_HoldAdd["Tháng 01/2026"])
+96: 5 |           ) {
+97: 5 |             delete saved.SavedRows_HoldAdd["Tháng 1/2026"];
+98: 5 |             delete saved.SavedRows_HoldAdd["Tháng 01/2026"];
+99: 5 |             loadedAndReset = true;
+100: 4 |           }
+101: 4 |           if (
+102: 4 |             saved.SavedBal_PayrollTrial &&
+103: 4 |             (saved.SavedBal_PayrollTrial["Tháng 1/2026"] ||
+104: 4 |               saved.SavedBal_PayrollTrial["Tháng 01/2026"])
+105: 5 |           ) {
+106: 5 |             delete saved.SavedBal_PayrollTrial["Tháng 1/2026"];
+107: 5 |             delete saved.SavedBal_PayrollTrial["Tháng 01/2026"];
+108: 5 |             loadedAndReset = true;
+109: 4 |           }
+110: 5 |           if (loadedAndReset) {
+111: 5 |             await localforage.setItem(STORAGE_KEY, saved);
+112: 4 |           }
+113: 4 | 
+114: 4 |           // --- MIGRATION FOR HOLD_AE ---
+115: 5 |           if (saved.Hold_AE) {
+116: 5 |             let h = saved.Hold_AE.headers;
+117: 5 |             if (
+118: 5 |               h.includes("LOẠI CK") ||
+119: 5 |               h.includes("CENTER NOTE") ||
+120: 5 |               h.includes("No") ||
+121: 5 |               h.includes("STT")
+122: 6 |             ) {
+123: 6 |               saved.Hold_AE.headers = h
+124: 6 |                 .filter((x) => x !== "LOẠI CK")
+125: 6 |                 .map((x) =>
+126: 6 |                   x === "CENTER NOTE" ? "Mã ae" : (x === "No" || x === "STT") ? "No." : x,
+127: 6 |                 );
+128: 6 |               h = saved.Hold_AE.headers;
+129: 7 |               saved.Hold_AE.data = saved.Hold_AE.data.map((row) => {
+130: 7 |                 const newRow = { ...row };
+131: 7 |                 delete newRow["LOẠI CK"];
+132: 8 |                 if ("CENTER NOTE" in newRow) {
+133: 8 |                   newRow["Mã ae"] = newRow["CENTER NOTE"];
+134: 8 |                   delete newRow["CENTER NOTE"];
+135: 7 |                 }
+136: 8 |                 if ("No" in newRow) {
+137: 8 |                   newRow["No."] = newRow["No"];
+138: 8 |                   delete newRow["No"];
+139: 7 |                 }
+140: 8 |                 if ("STT" in newRow) {
+141: 8 |                   newRow["No."] = newRow["STT"];
+142: 8 |                   delete newRow["STT"];
+143: 7 |                 }
+144: 7 |                 return newRow;
+145: 6 |               });
+146: 5 |             }
+147: 5 | 
+148: 5 |             // Migrate STT/No to No. on all datasets for consistency
+149: 5 |             const keysToMigrate: ("Hold_AE" | "Sheet1_AE" | "Bank_North_AE" | "SoSanh_AE")[] = [
+150: 5 |               "Hold_AE",
+151: 5 |               "Sheet1_AE",
+152: 5 |               "Bank_North_AE",
+153: 5 |               "SoSanh_AE",
+154: 5 |             ];
+155: 6 |             keysToMigrate.forEach((k) => {
+156: 7 |               if (saved[k]) {
+157: 7 |                 const headers = saved[k].headers || [];
+158: 8 |                 if (headers.includes("STT") || headers.includes("No")) {
+159: 8 |                   saved[k].headers = headers.map((x: string) =>
+160: 8 |                     x === "STT" || x === "No" ? "No." : x
+161: 8 |                   );
+162: 9 |                   if (saved[k].data && Array.isArray(saved[k].data)) {
+163: 10 |                     saved[k].data = saved[k].data.map((row: any) => {
+164: 10 |                       const newRow = { ...row };
+165: 11 |                       if ("STT" in newRow) {
+166: 11 |                         newRow["No."] = newRow["STT"];
+167: 11 |                         delete newRow["STT"];
+168: 10 |                       }
+169: 11 |                       if ("No" in newRow) {
+170: 11 |                         newRow["No."] = newRow["No"];
+171: 11 |                         delete newRow["No"];
+172: 10 |                       }
+173: 10 |                       return newRow;
+174: 9 |                     });
+175: 8 |                   }
+176: 7 |                 }
+177: 6 |               }
+178: 5 |             });
+179: 6 |             if (saved.Hold_AE.data && Array.isArray(saved.Hold_AE.data)) {
+180: 7 |               saved.Hold_AE.data = saved.Hold_AE.data.map((row: any) => {
+181: 7 |                 const newRow = { ...row };
+182: 7 |                 if (!newRow["Sheet Source"]) newRow["Sheet Source"] = "Unknown";
+183: 7 |                 return newRow;
+184: 6 |               });
+185: 5 |             }
+186: 5 |           // ------------------------------
+187: 5 | 
+188: 5 |           // Ensure PivotConfig and critical fields are structurally populated to prevent legacy TypeError crashes
+189: 6 |           if (!saved.PivotConfig) {
+190: 6 |             saved.PivotConfig = { ...INITIAL_APP_DATA.PivotConfig };
+191: 6 |           } else {
+192: 7 |             saved.PivotConfig = {
+193: 8 |               headers: {
+194: 8 |                 ...INITIAL_APP_DATA.PivotConfig?.headers,
+195: 8 |                 ...saved.PivotConfig.headers,
+196: 7 |               },
+197: 7 |               chargeCols:
+198: 7 |                 saved.PivotConfig.chargeCols &&
+199: 7 |                 saved.PivotConfig.chargeCols.length > 0
+200: 7 |                   ? saved.PivotConfig.chargeCols
+201: 7 |                   : [...(INITIAL_APP_DATA.PivotConfig?.chargeCols || [])],
+202: 6 |             };
+203: 5 |           }
+204: 5 | 
+205: 6 |           setState((prev) => ({
+206: 6 |             ...prev,
+207: 7 |             present: {
+208: 7 |               ...saved,
+209: 6 |             },
+210: 5 |           }));
+211: 4 |         }
+212: 4 |       } catch (e) {
+213: 4 |         console.error("Failed to load app data from storage", e);
+214: 4 |         toast.error("Không thể tải dữ liệu đã lưu.");
+215: 4 |       } finally {
+216: 4 |         setIsLoading(false);
+217: 3 |       }
+218: 2 |     };
+219: 2 |     loadData();
+220: 1 |   }, []);

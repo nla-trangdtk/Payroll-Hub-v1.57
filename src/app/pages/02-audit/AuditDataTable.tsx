@@ -2082,7 +2082,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
       },
     };
 
-    const renderHeaderCell = (col: Column, cIdx: number, rowSpan: number = 1) => {
+    const renderHeaderCell = (col: Column, cIdx: number, rowSpan: number = 1, top: string = "top-0") => {
       const isColActive =
         activeCell?.c === cIdx ||
         (selectionRange &&
@@ -2102,7 +2102,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
           onMouseDown={(e) => handleHeaderMouseDown(e, cIdx)}
           onMouseEnter={(e) => handleHeaderMouseEnter(e, cIdx)}
           onContextMenu={(e) => handleContextMenu(e, -1, cIdx)}
-          className={`sticky top-0 z-[60] whitespace-normal cursor-pointer select-none group border-b border-r border-[#E2E8F0] text-center ${headerClassName || "bg-[#F3EFE0]"} ${col.headerClassName || ""} ${isColActive ? "bg-accent/20" : ""} text-[0.75rem] font-bold uppercase text-slate-800`}
+          className={`sticky ${top} z-[60] whitespace-normal cursor-pointer select-none group border-b border-r border-[#E2E8F0] text-center ${headerClassName || "bg-[#F3EFE0]"} ${col.headerClassName || ""} text-[0.75rem] font-bold uppercase text-slate-800`}
           style={{
             padding: "var(--table-padding, 0.75rem 1rem)",
             width: widthStyle,
@@ -2111,7 +2111,10 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
             overflow: "visible",
           }}
         >
-          <div className="flex items-center gap-2 justify-center h-full px-2">
+          {isColActive && (
+            <div className="absolute inset-0 bg-accent/[0.08] pointer-events-none z-0" />
+          )}
+          <div className="flex items-center gap-2 justify-center h-full px-2 relative z-10">
             <span
               className={`transition-colors flex-1 flex flex-col md:flex-row items-center justify-center gap-1 ${col.sortable !== false ? "hover:text-accent/80 active:scale-[0.98]" : ""} ${col.headerSpanClassName || ""}`}
               onClick={(e) => {
@@ -2162,7 +2165,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
       <>
         <div
           ref={tableRef}
-          className={`flex flex-col flex-1 min-h-0 outline-none overflow-hidden rounded-[40px] relative border-0 border-white ${className || ""} data-table-wrapper audit-data-table-wrapper`}
+          className={`flex flex-col flex-1 min-h-0 outline-none overflow-hidden rounded-none relative border-0 border-white pl-0 ${className || ""} data-table-wrapper audit-data-table-wrapper`}
           style={
             {
               "--table-padding": densityStyles[rowDensity].padding,
@@ -2176,7 +2179,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
           <div
             ref={scrollContainerRef}
             tabIndex={0}
-            className={`flex-1 overflow-y-scroll overflow-x-auto custom-scrollbar outline-none bg-transparent relative min-h-0 transition-opacity duration-100 rounded-none mb-[8px] ${isStale ? "opacity-60" : "opacity-100"}`}
+            className={`flex-1 overflow-y-scroll overflow-x-auto custom-scrollbar outline-none bg-transparent relative min-h-0 transition-opacity duration-100 rounded-none border-0 mb-[8px] ${isStale ? "opacity-60" : "opacity-100"}`}
             onFocus={() => !activeCell && setActiveCell({ r: 0, c: 0 })}
             
             onMouseMove={handleTableMouseMove}
@@ -2215,12 +2218,12 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
                   );
                 })}
               </colgroup>
-              <thead className="sticky top-0 z-[60]">
+              <thead className="sticky top-0 z-[60] bg-white">
                 {/* Grouped Headers Row if any column has a group defined */}
                 {columns.some(c => c.group) && (
                   <tr>
                     {/* {selectable && <th rowSpan={2} className="bg-slate-50 border-b border-r border-border" />} */}
-                    {showRowNumber && <th rowSpan={2} className={`sticky top-0 z-[60] w-[50px] text-center ${headerClassName || "bg-[#F3EFE0]"} border-b border-r border-[#E2E8F0] text-[0.75rem] font-bold uppercase text-slate-800`}>No.</th>}
+                    {showRowNumber && <th rowSpan={2} className={`sticky top-0 z-[70] w-[50px] text-center ${headerClassName || "bg-[#F3EFE0]"} border-b border-r border-[#E2E8F0] text-[0.75rem] font-bold uppercase text-slate-800`}>No.</th>}
                     {(() => {
                       const groupings: { group: string | undefined, count: number, startIdx: number }[] = [];
                       visibleColumns.forEach((col, idx) => {
@@ -2238,9 +2241,9 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
                             <th 
                               key={idx} 
                               colSpan={g.count}
-                              className={`${
-                                g.group === 'THÔNG TIN CHUNG' ? 'bg-amber-100/60 text-amber-900' :
-                                g.group === 'CHI TIẾT GIỜ LÀM TA' ? 'bg-emerald-100/60 text-emerald-900' :
+                              className={`sticky top-0 z-[70] ${
+                                g.group === 'THÔNG TIN CHUNG' ? 'bg-[#FFF9E6] text-amber-900' :
+                                g.group === 'CHI TIẾT GIỜ LÀM TA' ? 'bg-[#E6FFFA] text-emerald-900' :
                                 headerClassName || "bg-[#F3EFE0]"
                               } border-b border-r border-[#E2E8F0] py-2 text-[0.75rem] font-bold uppercase text-center`}
                             >
@@ -2249,7 +2252,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
                           );
                         } else {
                           // Individual column with no group - rendering rowSpan=2
-                          return renderHeaderCell(visibleColumns[g.startIdx], g.startIdx, 2);
+                          return renderHeaderCell(visibleColumns[g.startIdx], g.startIdx, 2, "top-0");
                         }
                       });
                     })()}
@@ -2292,7 +2295,7 @@ export const DataTable = React.forwardRef<DataTableRef, DataTableProps>(
                     // Skip rendering if it was already rendered via rowSpan=2 in the group row (only if grouping is present)
                     if (columns.some(c => c.group) && !col.group) return null;
                     
-                    return renderHeaderCell(col, cIdx, 1);
+                    return renderHeaderCell(col, cIdx, 1, columns.some(c => c.group) ? "top-[32px]" : "top-0");
                   })}
                 </tr>
 

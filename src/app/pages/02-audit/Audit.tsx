@@ -249,7 +249,7 @@ export function Audit() {
     return { taDateRange: taRange, commonDateRange: commonRange };
   }, [rosterData, auditResults.fileDateRangeA]);
 
-  const teacherGroupLabel = "GIÁO VIÊN";
+  const teacherGroupLabel = "TOTAL PAYMENT";
   const taGroupLabel = "TA";
 
   const location = useLocation();
@@ -337,6 +337,34 @@ export function Audit() {
       ),
     },
     {
+      key: "bu",
+      label: "BU",
+      sortable: true,
+      filterable: true,
+      width: 80,
+      render: (val: string, row: any) => (
+        <span className="font-bold text-slate-500">{val || row.bu || ""}</span>
+      )
+    },
+    {
+      key: "type",
+      label: "Nghiệp vụ",
+      sortable: true,
+      filterable: true,
+      width: 110,
+      render: (val: string, row: any) => {
+        const displayType = val || row.teacherDetails?.[0]?.type || row.taDetails?.[0]?.type || "";
+        const source = row.sourceSheet || row.teacherDetails?.[0]?.sourceSheet || row.taDetails?.[0]?.sourceSheet || "";
+        const isBonus = displayType === "Bonus" || (source && (source.includes("Bonus") || source.includes("Summer") || source.includes("Instructors")));
+        return (
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase flex items-center gap-1 ${isBonus ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
+            {isBonus && <span>⏩</span>}
+            {displayType}
+          </span>
+        );
+      }
+    },
+    {
       key: "className",
       label: "Lớp",
       sortable: true,
@@ -376,7 +404,7 @@ export function Audit() {
         <span className="tabular-nums font-bold text-primary">
           {(() => {
             const n = Number(val);
-            return (val && val !== "-" && !isNaN(n) && n !== 0) ? n.toFixed(2) : "";
+            return (val && val !== "-" && !isNaN(n) && n !== 0) ? n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "";
           })()}
         </span>
       ),
@@ -396,7 +424,7 @@ export function Audit() {
         <span className="tabular-nums text-emerald-600 font-bold bg-emerald-50/50 px-2 py-1 rounded">
           {(() => {
             const n = Number(val);
-            return (val && val !== "-" && !isNaN(n) && n !== 0) ? n.toFixed(2) : "";
+            return (val && val !== "-" && !isNaN(n) && n !== 0) ? n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "";
           })()}
         </span>
       ),
@@ -426,7 +454,7 @@ export function Audit() {
           <span className="text-slate-700 font-bold text-xs">
             {(() => {
               const n = Number(val);
-              return (val && val !== "-" && !isNaN(n) && n !== 0) ? n.toFixed(2) : "";
+              return (val && val !== "-" && !isNaN(n) && n !== 0) ? n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "";
             })()}
           </span>
           <span className="text-[10px] text-muted-foreground font-medium">
@@ -548,7 +576,8 @@ export function Audit() {
           _parentClassName: parentClassName,
           _parentCenter: row.displayCenter || row.center,
           _parentStatus: row.status,
-          _fallbackTeacherName: fallbackTeacherName
+          _fallbackTeacherName: fallbackTeacherName,
+          _type: r.teacher?.type || r.ta?.type || ""
         });
       });
     });
@@ -662,6 +691,7 @@ export function Audit() {
           allowedTAs: formattedAllowedTAs,
           actualTAs: actualTAsCount,
           variance: sessionStatus,
+          type: s._type || "",
           _fullDate: s.fullDate || s.date || "",
           _fullClassName: s._parentClassName || "KHÔNG CÓ LỚP HỌC",
         });
@@ -725,7 +755,7 @@ export function Audit() {
   const detailColumns: Column[] = useMemo(() => [
     {
       key: "center",
-      label: "Center/Business",
+      label: "L07",
       group: "THÔNG TIN CHUNG",
       sortable: true,
       filterable: true,
@@ -741,9 +771,22 @@ export function Audit() {
             handleDetailRowClick(row, "className");
           }}
         >
-          {val || "N/A"}
+          {val || row.displayCenter || "N/A"}
         </span>
       ),
+    },
+    {
+      key: "bu",
+      label: "BU",
+      group: "THÔNG TIN CHUNG",
+      sortable: true,
+      filterable: true,
+      autoRowSpan: true,
+      width: 80,
+      render: (val: string, row: any) => {
+        const displayBu = val || row.bu || "";
+        return <span className="font-bold text-slate-500">{displayBu}</span>;
+      }
     },
     {
       key: "className",
@@ -823,9 +866,44 @@ export function Audit() {
           className="tabular-nums font-bold text-primary w-full h-full flex items-center justify-center"
           onClick={(e) => e.stopPropagation()}
         >
-          {val}
+          {(() => {
+            const n = Number(val);
+            return (val && val !== "-" && !isNaN(n) && n !== 0) ? n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : val;
+          })()}
         </div>
       ),
+    },
+    {
+      key: "type",
+      label: "Nghiệp vụ",
+      group: "THÔNG TIN CHUNG",
+      sortable: true,
+      filterable: true,
+      width: 110,
+      render: (val: string, row: any) => {
+        const displayType = val || row.teacher?.type || row.ta?.type || "";
+        const source = row.sourceSheet || row.teacher?.sourceSheet || row.ta?.sourceSheet || "";
+        const isBonus = displayType === "Bonus" || (source && (source.includes("Bonus") || source.includes("Summer") || source.includes("Instructors")));
+        return (
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase flex items-center gap-1 ${isBonus ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
+            {isBonus && <span>⏩</span>}
+            {displayType}
+          </span>
+        );
+      }
+    },
+    {
+      key: "sourceSheet",
+      label: "Sheet Source",
+      group: "THÔNG TIN CHUNG",
+      sortable: true,
+      filterable: true,
+      autoRowSpan: true,
+      width: 150,
+      render: (val: string, row: any) => {
+        const displaySheet = val || row.sourceSheet || row.teacher?.sourceSheet || row.ta?.sourceSheet || "";
+        return <span className="text-[10px] font-medium text-slate-500 italic">{displaySheet}</span>;
+      }
     },
 
     // Group: Thông tin chung (Common Context)
@@ -922,7 +1000,12 @@ export function Audit() {
       width: 90,
       align: "center",
       render: (val: string) => (
-        <div className="tabular-nums text-emerald-600 font-bold w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>{val}</div>
+        <div className="tabular-nums text-emerald-600 font-bold w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+          {(() => {
+            const n = Number(val);
+            return (val && val !== "-" && !isNaN(n) && n !== 0) ? n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : val;
+          })()}
+        </div>
       ),
     },
 
@@ -1022,7 +1105,7 @@ export function Audit() {
       <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[120px] -z-10" />
       <div className="absolute bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-emerald-500/5 rounded-full blur-[100px] -z-10" />
 
-      <div className="flex flex-col lg:flex-row gap-8 w-full flex-1 min-h-0 min-w-0 mt-0 px-0 pb-0 relative z-10">
+      <div className="flex flex-col lg:flex-row gap-8 w-full flex-1 min-h-0 min-w-0 mt-0 px-0 pb-0 relative z-10 border border-emerald-100">
         {/* Left Panel - Source Selection (Swapped back to left) */}
         {!isConfigHidden && (
           <motion.div
@@ -1238,7 +1321,7 @@ export function Audit() {
         )}
 
         {/* Right Panel - Results (Expanded to fill remaining space) */}
-        <div className="flex-1 bg-white soft-card force-light flex flex-col min-h-0 min-w-0 mb-[6px] relative rounded-3xl overflow-hidden shadow-2xl border border-emerald-100">
+        <div className="flex-1 bg-white flex flex-col min-h-0 min-w-0 mb-[6px] relative rounded-none overflow-hidden shadow-2xl border-0">
           <div className="absolute inset-0 bg-pattern-green opacity-[0.02] pointer-events-none" />
           <div className="px-6 md:px-8 py-2.5 flex items-center justify-between border-b border-emerald-50 bg-white shrink-0 relative z-50 rounded-t-3xl">
             <div className="flex items-center gap-4">

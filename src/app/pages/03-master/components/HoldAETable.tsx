@@ -3,8 +3,41 @@ import React, { useMemo, useCallback, forwardRef } from "react";
 import { useAppData } from "../../../lib/contexts/AppDataContext";
 import { DataTable } from "../../../components/DataTable";
 import { Trash2 } from "lucide-react";
-import { parseMoneyToNumber } from "../../../lib/utils/data-utils";
+import { parseMoneyToNumber, removeVietnameseTones } from "../../../lib/utils/data-utils";
 import { toast } from "sonner";
+
+function cleanIDNumber(val: unknown): string {
+  if (val === undefined || val === null) return "";
+  let str = String(val).trim();
+  if (typeof val === "number") {
+    if (str.includes("E") || str.includes("e") || str.includes("+")) {
+      str = val.toLocaleString("fullwide", { useGrouping: false });
+    }
+    if (str.includes(".")) {
+      str = str.split(".")[0];
+    }
+  } else {
+    if (str.includes("E") || str.includes("e")) {
+      const num = Number(str);
+      if (!isNaN(num)) {
+        str = num.toLocaleString("fullwide", { useGrouping: false });
+      }
+    }
+    if (str.includes(".")) {
+      const parts = str.split(".");
+      if (parts[1] === "0" || parts[1] === "00" || /^[0]+$/.test(parts[1])) {
+        str = parts[0];
+      }
+    }
+  }
+  return str;
+}
+
+function cleanFullName(val: unknown): string {
+  if (val === undefined || val === null) return "";
+  const str = String(val).trim();
+  return removeVietnameseTones(str).toUpperCase();
+}
 
 interface HoldAETableProps {
   searchTerm: string;
@@ -90,20 +123,33 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
           const data = [...targetTab.data];
           const rowIndex = data.findIndex(
             (r, idx) =>
-              (row._originalIndex !== undefined &&
+              r && row &&
+              ((row._originalIndex !== undefined &&
                 idx === row._originalIndex) ||
-              (r.id && row.id && r.id === row.id) ||
-              r === row ||
-              (r["ID Number"] === row["ID Number"] &&
-                r["TOTAL PAYMENT"] === row["TOTAL PAYMENT"] &&
-                ((r["No."] !== undefined && r["No."] === row["No."]) ||
-                  (r["No"] !== undefined && r["No"] === row["No"]) ||
-                  (r["STT"] !== undefined && r["STT"] === row["STT"]))),
+                (r.id && row.id && r.id === row.id) ||
+                r === row ||
+                (r["ID Number"] === row["ID Number"] &&
+                  r["TOTAL PAYMENT"] === row["TOTAL PAYMENT"] &&
+                  ((r["No."] !== undefined && r["No."] === row["No."]) ||
+                    (r["No"] !== undefined && r["No"] === row["No"]) ||
+                    (r["STT"] !== undefined && r["STT"] === row["STT"])))),
           );
 
           if (rowIndex === -1) return prev;
 
-          const updatedRow = { ...data[rowIndex], [columnKey]: value };
+          let finalValue = value;
+          const colKeyUpper = String(columnKey || "").toUpperCase();
+          if (colKeyUpper.includes("ID NUMBER") || colKeyUpper === "ID" || colKeyUpper === "CCCD" || colKeyUpper === "MÃ AE") {
+            finalValue = cleanIDNumber(value);
+          } else if (
+            colKeyUpper.includes("FULL NAME") ||
+            colKeyUpper.includes("BENEFICIARY NAME") ||
+            colKeyUpper.includes("HỌ VÀ TÊN")
+          ) {
+            finalValue = cleanFullName(value);
+          }
+
+          const updatedRow = { ...data[rowIndex], [columnKey]: finalValue };
 
           // Automatically offset the TOTAL PAYMENT sign based on Trạng thái or Nghiệp vụ
           if (columnKey === "Trạng thái" || columnKey === "Nghiệp vụ") {
@@ -120,6 +166,9 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
             } else if (valUpper.includes("ADD")) {
               updatedRow["TOTAL PAYMENT"] = Math.abs(currentTotalPayment);
               updatedRow["Nghiệp vụ"] = "Add";
+            } else if (valUpper.includes("BONUS") || value === "⏩" || value === "⏯") {
+              updatedRow["TOTAL PAYMENT"] = Math.abs(currentTotalPayment);
+              updatedRow["Nghiệp vụ"] = "⏩";
             }
           }
 
@@ -144,12 +193,13 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
           const data = [...targetTab.data];
           const rowIndex = data.findIndex(
             (r, idx) =>
-              (rowToDelete._originalIndex !== undefined &&
+              r && rowToDelete &&
+              ((rowToDelete._originalIndex !== undefined &&
                 idx === rowToDelete._originalIndex) ||
-              (r.id && rowToDelete.id && r.id === rowToDelete.id) ||
-              r === rowToDelete ||
-              (r["ID Number"] === rowToDelete["ID Number"] &&
-                r["TOTAL PAYMENT"] === rowToDelete["TOTAL PAYMENT"]),
+                (r.id && rowToDelete.id && r.id === rowToDelete.id) ||
+                r === rowToDelete ||
+                (r["ID Number"] === rowToDelete["ID Number"] &&
+                  r["TOTAL PAYMENT"] === rowToDelete["TOTAL PAYMENT"])),
           );
 
           if (rowIndex === -1) return prev;
@@ -189,14 +239,15 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
           if (!targetTab || !targetTab.data) return prev;
 
           const data = [...targetTab.data].filter((r) => {
-            return !rowsToDelete.some(
+            return r && !rowsToDelete.some(
               (rowToDelete) =>
-                (rowToDelete._originalIndex !== undefined &&
+                rowToDelete &&
+                ((rowToDelete._originalIndex !== undefined &&
                   targetTab.data.indexOf(r) === rowToDelete._originalIndex) ||
                 (r.id && rowToDelete.id && r.id === rowToDelete.id) ||
                 r === rowToDelete ||
                 (r["ID Number"] === rowToDelete["ID Number"] &&
-                  r["TOTAL PAYMENT"] === rowToDelete["TOTAL PAYMENT"]),
+                  r["TOTAL PAYMENT"] === rowToDelete["TOTAL PAYMENT"])),
             );
           });
 
@@ -276,6 +327,8 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
               const nghiepVu = String(row["Nghiệp vụ"] || "").toUpperCase();
               const isHold = nghiepVu.includes("HOLD");
               const isCancel = nghiepVu.includes("CANCEL");
+              const isBonus = nghiepVu.includes("BONUS") || nghiepVu.includes("⏩") || nghiepVu.includes("⏯");
+              const isAdd = !isHold && !isCancel && !isBonus;
 
               const currentPeriodVal = appData.globalMonth || "03.2026";
               const currentPeriodParts = currentPeriodVal.split(".");
@@ -295,14 +348,14 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
                 inactiveStyle: string,
               ) => {
                 const base =
-                  "flex items-center justify-center w-8 h-8 rounded-full border transition-all text-sm shadow-sm";
+                  "flex items-center justify-center h-7 px-2.5 rounded-full border text-[10px] font-bold tracking-wider transition-colors select-none min-w-[54px]";
                 if (!isPeriodMatch) {
-                  return `${base} opacity-30 grayscale cursor-not-allowed pointer-events-none ${active ? activeStyle : inactiveStyle}`;
+                  return `${base} opacity-20 grayscale cursor-not-allowed pointer-events-none ${active ? activeStyle : inactiveStyle}`;
                 }
                 return `${base} cursor-pointer ${
                   active
-                    ? `${activeStyle} scale-110 font-bold border-slate-400 z-10 shadow-md`
-                    : `${inactiveStyle} opacity-40 border-slate-200 hover:opacity-100 hover:bg-slate-100`
+                    ? `${activeStyle} border-current shadow-sm`
+                    : `${inactiveStyle} border-slate-200 hover:bg-slate-100 hover:border-slate-300`
                 }`;
               };
 
@@ -318,10 +371,17 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
                 ? `Chỉ sửa đổi được tại card tháng chọn: ${rowReportingMonth}`
                 : "Cancel";
 
+              const titleBonus = !isPeriodMatch
+                ? `Chỉ sửa đổi được tại card tháng chọn: ${rowReportingMonth}`
+                : "Bonus";
+
               return (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="flex items-center justify-center gap-2.5 w-full min-w-[150px]"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onMouseUp={(e) => e.stopPropagation()}
+                  onDoubleClick={(e) => e.stopPropagation()}
+                  className="flex items-center justify-center gap-1.5 w-full min-w-[240px] py-1"
                 >
                   <button
                     onClick={() => {
@@ -331,14 +391,14 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
                       }
                     }}
                     className={buttonClass(
-                      !isHold && !isCancel,
-                      "bg-emerald-50 border-emerald-400 text-emerald-700",
-                      "bg-slate-50 border-transparent text-slate-400",
+                      isAdd,
+                      "bg-emerald-600 border-emerald-600 text-white",
+                      "bg-slate-50 text-slate-400",
                     )}
                     title={titleAdd}
                     disabled={!isPeriodMatch}
                   >
-                    <span>☑️</span>
+                    <span>A</span>
                   </button>
                   <button
                     onClick={() => {
@@ -349,13 +409,13 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
                     }}
                     className={buttonClass(
                       isHold,
-                      "bg-amber-50 border-amber-400 text-amber-700",
-                      "bg-slate-50 border-transparent text-slate-400",
+                      "bg-amber-500 border-amber-500 text-white",
+                      "bg-slate-50 text-slate-400",
                     )}
                     title={titleHold}
                     disabled={!isPeriodMatch}
                   >
-                    <span>✖️</span>
+                    <span>H</span>
                   </button>
                   <button
                     onClick={() => {
@@ -366,13 +426,30 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
                     }}
                     className={buttonClass(
                       isCancel,
-                      "bg-slate-100 border-slate-400 text-slate-700",
-                      "bg-slate-50 border-transparent text-slate-400",
+                      "bg-rose-500 border-rose-500 text-white",
+                      "bg-slate-50 text-slate-400",
                     )}
                     title={titleCancel}
                     disabled={!isPeriodMatch}
                   >
-                    <span>©️</span>
+                    <span>C</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!isPeriodMatch) return;
+                      if (row["Nghiệp vụ"] !== "⏩") {
+                        handleCellChange(row, "Nghiệp vụ", "⏩");
+                      }
+                    }}
+                    className={buttonClass(
+                      isBonus,
+                      "bg-cyan-600 border-cyan-600 text-white",
+                      "bg-slate-50 text-slate-400",
+                    )}
+                    title={titleBonus}
+                    disabled={!isPeriodMatch}
+                  >
+                    <span>B</span>
                   </button>
                 </div>
               );
@@ -387,6 +464,7 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
             filterable: true,
             readOnly: isReadOnly,
             render: renderOption,
+            width: header === "Nghiệp vụ" ? 270 : undefined,
           };
         });
     }, [filteredData.headers, handleCellChange, appData.globalMonth]);
@@ -414,14 +492,15 @@ export const HoldAETable = forwardRef<any, HoldAETableProps>(
                   if (!targetTab || !targetTab.data) return prev;
 
                   const data = [...targetTab.data].filter((r) => {
-                    return !selectedRows.some(
+                    return r && !selectedRows.some(
                       (rowToDelete) =>
-                        (rowToDelete._originalIndex !== undefined &&
+                        rowToDelete &&
+                        ((rowToDelete._originalIndex !== undefined &&
                           targetTab.data.indexOf(r) === rowToDelete._originalIndex) ||
                         (r.id && rowToDelete.id && r.id === rowToDelete.id) ||
                         r === rowToDelete ||
                         (r["ID Number"] === rowToDelete["ID Number"] &&
-                          r["TOTAL PAYMENT"] === rowToDelete["TOTAL PAYMENT"]),
+                          r["TOTAL PAYMENT"] === rowToDelete["TOTAL PAYMENT"])),
                     );
                   });
 

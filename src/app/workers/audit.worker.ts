@@ -7,52 +7,56 @@
 import { parseAnyDate, getVal, parseTimeStrToHours } from "../lib/utils/data-utils";
 
 const RAW_MAPPINGS = [
-  { l07: "BN0001.LTT", keys: ["NSL","BN01","BN1","Ly Thai To"] },
-  { l07: "BN0002.TSN", keys: ["TUS","TSN","BN02","BN2"] },
-  { l07: "HN0001.PHY", keys: ["HN1.PH","PHY","PH","HN01","HN1"] },
-  { l07: "HN0002.THA", keys: ["TH","THA","HN02","HN2"] },
-  { l07: "HN0003.HQV", keys: ["HQV","HN03","HN3"] },
-  { l07: "HN0004.LGI", keys: ["LGI","LG","HN04","HN4"] },
-  { l07: "HN0005.NVL", keys: ["NVL","HN05","HN5"] },
-  { l07: "HN0007.VQN", keys: ["VQ","VQN","HN07","HN7"] },
-  { l07: "HN0010.MDH", keys: ["MD","MDH","HN10","The Garden"] },
-  { l07: "HN0012.NHT", keys: ["NHT","HM","HN12"] },
-  { l07: "HN0014.TMI", keys: ["TMI","TM","HN14"] },
-  { l07: "HN0015.VPU", keys: ["VPU","VP","HN15"] },
-  { l07: "HN0016.PDP", keys: ["PDP","HN16"] },
-  { l07: "HN0017.HNI", keys: ["HNI","HN17"] },
-  { l07: "HN0018.VTP", keys: ["VTP","HN18"] },
-  { l07: "HN0019.NTN", keys: ["NT","NTN","HN19"] },
-  { l07: "HN0021.NGD", keys: ["NGD","HN21"] },
-  { l07: "HN0022.NVO", keys: ["NVO","HN22","Mo Lao"] },
-  { l07: "HN0023.LDM", keys: ["LD","LDM","HN23"] },
-  { l07: "HN0024.TCY", keys: ["TC","TCY","HN24"] },
-  { l07: "HN0025.LTT", keys: ["LTT","HN25"] },
-  { l07: "HN0026.VHG", keys: ["VH","VHG","Viet Hung","HN26","HN0026"] },
-  { l07: "HN0027.OPK", keys: ["OP","OPK","OCEAN PARK","HN27"] },
-  { l07: "HN0028.PVD", keys: ["PVD","HN28"] },
-  { l07: "HN0029.VPH", keys: ["VPH","HN29"] },
-  { l07: "HN0030.AKH", keys: ["AKH","HN30"] },
-  { l07: "HN0031.AHG", keys: ["AHG","HN31"] },
-  { l07: "HN0032.LLQ", keys: ["LLQ","HN32"] },
-  { l07: "HN0033.DAH", keys: ["DAH","DA","HN33"] },
-  { l07: "HN0034.HTN", keys: ["HTN","HN34"] },
-  { l07: "HY0001.ECP", keys: ["ECP","HY01"] },
-  { l07: "HP0001.LHP", keys: ["LHP","HP1","HP01"] },
-  { l07: "HP0002.HBT", keys: ["HBT","HP2","HP02"] },
-  { l07: "HP0003.VIN", keys: ["HP3","HP03"] },
-  { l07: "QN0001.HLG", keys: ["HLG","QN","HL","QN01","Quang Ninh"] },
-  { l07: "VIN001.CTG", keys: ["CTG","CT","VIN01","VIN1"] },
-  { l07: "VP0001.PCT", keys: ["PCT","VP01","VP1","Vinh Phuc","VP0001"] },
-  { l07: "TH0001.TPU", keys: ["TPU","TH01.TPU","TH1"] },
-  { l07: "TN0001.LNQ", keys: ["LNQ","TN01.LNQ","TN01","TN1"] },
-  { l07: "HN0200.ASP", keys: ["HN0.ASP","ASP","HN0200"] },
-  { l07: "PT0001.HVG", keys: ["HVG","PT01"] },
-  { l07: "MKT LOCAL NORTH", keys: ["NORTH.MKT INTERN","MKT LOCAL NORTH","NTW"] },
+  { l07: "BN0001.LTT", keys: ["NSL", "Ngo Si Lien", "BN01", "Ly Thai To", "Lý Thái Tổ", "BN1", "BN1.NSL"] },
+  { l07: "BN0002.TSN", keys: ["TUS", "TSN", "Tu Son", "BN02", "BN2", "BN2.TUS"] },
+  { l07: "HN0001.PHY", keys: ["HN1.PH", "PHY", "PH", "Pho Hue", "Pho Hue Junior", "HN01", "HN1"] },
+  { l07: "HN0002.THA", keys: ["TH", "THA", "Thai Ha", "HN02", "HN2", "HN2.TH"] },
+  { l07: "HN0003.HQV", keys: ["HQV", "Hoang Quoc Viet", "HN03", "HN3", "HN3.HQV"] },
+  { l07: "HN0004.LGI", keys: ["LGI", "LG", "Lieu Giai", "HN04", "HN4", "HN4.LG"] },
+  { l07: "HN0005.NVL", keys: ["NVL", "Nguyen Van Linh", "HN05", "HN5", "HN5.NVL"] },
+  { l07: "HN0007.VQN", keys: ["VQ", "VQN", "Van Quan", "HN07", "HN7", "HN7.VQ"] },
+  { l07: "HN0010.MDH", keys: ["MD", "MDH", "My Dinh", "The Garden", "HN10", "HN10.TG"] },
+  { l07: "HN0012.NHT", keys: ["NHT", "HM", "Hoang Mai", "Nguyen Huu Tho", "Nguyễn Hữu Thọ", "HN12", "HN12.NHT"] },
+  { l07: "HN0014.TMI", keys: ["TMI", "TM", "Tan Mai", "HN14", "HN14.TM"] },
+  { l07: "HN0015.VPU", keys: ["VPU", "VP", "Van Phu", "HN15", "HN15.VP"] },
+  { l07: "HN0016.PDP", keys: ["PDP", "Phan Dinh Phung", "HN16", "HN16.PDP"] },
+  { l07: "HN0017.HNI", keys: ["HNI", "Ham Nghi", "HN17", "HN17.HNI"] },
+  { l07: "HN0018.VTP", keys: ["VTP", "Vu Tong Phan", "HN18", "HN18.VTP"] },
+  { l07: "HN0019.NTN", keys: ["NTN", "NT", "Nguyen Tuan", "HN19", "HN19.NT"] },
+  { l07: "HN0021.NGD", keys: ["NGD", "Ngoai Giao Doan", "HN21", "HN21.NGD"] },
+  { l07: "HN0022.NVO", keys: ["NVO", "Nguyen Van Loc", "Mo Lao", "Mỗ Lao", "HN22", "HN22.NVO"] },
+  { l07: "HN0023.LDM", keys: ["LDM", "LD", "Linh Dam", "HN23", "HN23.LD"] },
+  { l07: "HN0024.TCY", keys: ["TCY", "TC", "TIMES CITY", "HN24", "HN24.TC"] },
+  { l07: "HN0025.LTT", keys: ["LTT", "Le Trong Tan", "HN25", "HN25.LTT"] },
+  { l07: "HN0026.VHG", keys: ["VHG", "VH", "Viet Hung", "HN26", "HN26.VHG"] },
+  { l07: "HN0027.OPK", keys: ["OPK", "OCP", "OP", "Ocepark", "Ocean Park", "HN27", "HN27.OP"] },
+  { l07: "HN0028.PVD", keys: ["PVD", "Pham Van Dong", "HN28", "HN28.PVD"] },
+  { l07: "HN0029.VPH", keys: ["VPH", "Vu Pham Ham", "HN29", "HN29.VPH"] },
+  { l07: "HN0030.AKH", keys: ["AKH", "AK", "An Khanh", "HN30", "HN30.AKH"] },
+  { l07: "HN0031.AHG", keys: ["AHG", "AH", "An Hung", "HN31", "HN31.AHG"] },
+  { l07: "HN0032.LLQ", keys: ["LLQ", "Lac Long Quan", "Xuan Dieu", "Xuan Dieu (đổi thành Lạc Long Quân)", "HN32", "HN32.LLQ"] },
+  { l07: "HN0033.DAH", keys: ["DAH", "DA", "Dong Anh", "HN33.DAH", "HN33"] },
+  { l07: "HN0034.HTN", keys: ["HTN", "Hong Tien", "HN34.HTN", "HN34"] },
+  { l07: "HY0001.ECP", keys: ["ECP", "Ecopark", "HY01", "HY01.ECP"] },
+  { l07: "HP0001.LHP", keys: ["LHP", "HP1", "HP01", "Hai Phong 1", "HP1.LHP"] },
+  { l07: "HP0002.HBT", keys: ["HBT", "HP2", "HP02", "Hai Phong 2", "HP2.HBT"] },
+  { l07: "HP0003.VIN", keys: ["HP3", "HP03", "Hai Phong 3", "HP3.VIN"] },
+  { l07: "QN0001.HLG", keys: ["HLG", "QN", "HL", "Ha Long", "QN01", "Quang Ninh", "Quảng Ninh", "QN1", "QN01.HL"] },
+  { l07: "VIN001.CTG", keys: ["CTG", "VIN", "Vinh", "VIN01", "VIN1", "VIN01.CTG", "VIN01.CT"] },
+  { l07: "VP0001.PCT", keys: ["PCT", "VP01", "VP1", "Vinh Phuc", "VP0001", "VP01.PCT"] },
+  { l07: "TH0001.TPU", keys: ["TPU", "TH01.TPU", "MKT TH01.TPU", "Thanh Hoa", "TH01"] },
+  { l07: "TN0001.LNQ", keys: ["LNQ", "TN01.LNQ", "MKT TN01.LNQ", "Thai Nguyen", "TN01"] },
+  { l07: "PT0001.HVG", keys: ["HVG", "PT01.HVG", "MKT PT01.HVG", "Phu Tho", "PT01"] },
+  { l07: "AA", keys: ["AA", "Apollo Advance -South"] },
+  { l07: "HN0200.ASP", keys: ["HN0.ASP", "ASP", "ASP - HN", "HN0200"] },
+  { l07: "MKT LOCAL NORTH", keys: ["NORTH.MKT INTERN", "MKT LOCAL NORTH", "NTW"] },
+  { l07: "MKT LOCAL NORTH_TH", keys: ["MKT LOCAL NORTH_TH"] },
+  { l07: "MKT LOCAL NORTH_TN", keys: ["MKT LOCAL NORTH_TN"] },
+  { l07: "MKT LOCAL NORTH_HP", keys: ["MKT LOCAL NORTH_HP"] },
+  { l07: "MKT LOCAL NORTH_PT", keys: ["MKT LOCAL NORTH_PT"] },
+  { l07: "ZHN0000.GY", keys: ["CAMBRIDGE", "CONTEST"] },
   { l07: "MKT HP", keys: ["MKT HP"] },
-  { l07: "ZHN0000.GY", keys: ["CAMBRIDGE","CONTEST QN","Gym"] },
-  { l07: "AA", keys: ["AA","Apollo Advance"] },
-] as const;
+];
 
 const VALID_CENTERS = new Set(RAW_MAPPINGS.map((m) => m.l07));
 const PRE_MAPPINGS = (RAW_MAPPINGS as any[]).flatMap((m: any) =>
@@ -93,7 +97,7 @@ function getAllowedTAs(cls: string, students: number): number {
   return 0;
 }
 function runAuditComputation(params: any) {
-  const { fileAData, rosterData, fromDate, toDate, checkTAsDataRaw, fileNameA, centerMappingParam } = params;
+  const { fileAData, rosterData, fromDate, toDate, checkTAsDataRaw, fileNameA, centerMappingParam, bonusData, bonusSheetName } = params;
   const cmap: Record<string,string> = centerMappingParam || {};
   const validCls = /(KDG\s*[1-3]|PRI\s*[1-6]|PRI\s*STARTER|PRIMARY\s*STARTER|SEC\s*(STARTER|FOUND))/i;
   const INVALID_TEACHERS = ["\u1ed1 v\u1ea5n", "no teacher", "tba", "to be assigned", "kh\u00f4ng c\u00f3"];
@@ -141,7 +145,7 @@ function runAuditComputation(params: any) {
     [mH, sH].forEach((ha) => ha.forEach((h: any, idx: number) => {
       const hs = String(h).trim().toLowerCase().replace(/\s+/g, " ");
       if (hs.includes("teacher") || hs === "gi\u00E1o vi\u00EAn" || hs === "t\u00EAn gv") { if (colM.teacher === -1) colM.teacher = idx; }
-      else if (hs.includes("center") || hs.includes("c\u01A1 s\u1EDF") || hs.includes("location") || hs.includes("trung t\u00E2m")) { if (colM.center === -1) colM.center = idx; }
+      else if (hs.includes("center") || hs.includes("cơ sở") || hs.includes("location") || hs.includes("trung tâm") || hs.includes("mã ae") || hs === "ae" || hs.includes("ae code")) { if (colM.center === -1) colM.center = idx; }
       else if (hs.includes("class") || hs === "l\u1EDBp" || hs === "m\u00E3 l\u1EDBp") { if (colM.className === -1) colM.className = idx; }
       else if (hs.includes("type") || hs.includes("lo\u1EA1i")) { if (colM.type === -1) colM.type = idx; }
       else if (hs === "total" || hs === "grand total" || hs === "t\u1ED5ng" || hs === "quy ra s\u1ED1 gi\u1EDD l\u00E0m") { if (colM.total === -1) colM.total = idx; }
@@ -240,42 +244,59 @@ function runAuditComputation(params: any) {
 
   rosterData.forEach((row: any) => {
     let cL07 = getL07FromFile(row._sourceFile || "");
-    if (!cL07) { const cc = String(getVal(row, ["center","c\u01A1 s\u1EDF","l07","chi nh\u00E1nh"]) || ""); cL07 = resolveCenter(cc, cmap); }
+    if (!cL07) {
+      const cc = String(row.l07 || getVal(row, ["center", "cơ sở", "l07", "chi nhánh", "mã ae", "ae code"]) || "");
+      cL07 = resolveCenter(cc, cmap);
+    }
     if (!(VALID_CENTERS as Set<string>).has(cL07)) return;
     cenB.add(cL07);
-    let cls = String(getVal(row, ["class","l\u1EDBp","class name","m\u00E3 l\u1EDBp"]) || "").trim().toUpperCase();
-    if (!cls) cls = "KH\u00D4NG C\u00D3 L\u1EACP H\u1ECCC";
-    if (cls !== "KH\u00D4NG C\u00D3 L\u1EACP H\u1ECCC" && !validCls.test(norm(cls))) return;
-    const rawType = String(getVal(row, ["type","task type","tk_type","lo\u1EA1i c\u00F4ng vi\u1EC7c","code"]) || "");
-    if (rawType.toLowerCase().replace(/[\s-]/g,"") && !rawType.toLowerCase().replace(/[\s-]/g,"").includes("inclass")) return;
-    const dv2 = getVal(row, ["date","ng\u00E0y","tk_date","session date","sessiondate","ng\u00E0y h\u1ECDc","ng\u00E0y th\u00E1ng"]);
-    let rDB: Date|null = parseAnyDate(dv2, prefYr); if (!rDB) return;
+    let cls = String(getVal(row, ["class", "lớp", "class name", "mã lớp"]) || "").trim().toUpperCase();
+    if (!cls) cls = "KHÔNG CÓ LỚP HỌC";
+    if (cls !== "KHÔNG CÓ LỚP HỌC" && !validCls.test(norm(cls))) return;
+    const rawType = String(getVal(row, ["type", "task type", "tk_type", "loại công việc", "code"]) || "");
+    if (rawType.toLowerCase().replace(/[\s-]/g, "") && !rawType.toLowerCase().replace(/[\s-]/g, "").includes("inclass")) return;
+    const dv2 = getVal(row, ["date", "ngày", "tk_date", "session date", "sessiondate", "ngày học", "ngày tháng"]);
+    let rDB: Date | null = parseAnyDate(dv2, prefYr); if (!rDB) return;
     if (fDate && tDate) {
-      if (rDB < fDate) { const ny = new Date(rDB); ny.setFullYear(rDB.getFullYear()+1); if (ny >= fDate && ny <= tDate) rDB = ny; }
-      else if (rDB > tDate) { const py = new Date(rDB); py.setFullYear(rDB.getFullYear()-1); if (py >= fDate && py <= tDate) rDB = py; }
+      if (rDB < fDate) { const ny = new Date(rDB); ny.setFullYear(rDB.getFullYear() + 1); if (ny >= fDate && ny <= tDate) rDB = ny; }
+      else if (rDB > tDate) { const py = new Date(rDB); py.setFullYear(rDB.getFullYear() - 1); if (py >= fDate && py <= tDate) rDB = py; }
     }
     if (fDate && rDB < fDate) return; if (tDate && rDB > tDate) return;
-    const ds = String(rDB.getDate()).padStart(2,"0")+"/"+String(rDB.getMonth()+1).padStart(2,"0")+"/"+rDB.getFullYear();
-    const dd = getVal(row, ["quy ra s\u1ED1 gi\u1EDD l\u00E0m","s\u1ED1 gi\u1EDD quy \u0111\u1ED5i","workingHours","converted hours","hours","gi\u1EDD l\u00E0m"]);
+    const ds = String(rDB.getDate()).padStart(2, "0") + "/" + String(rDB.getMonth() + 1).padStart(2, "0") + "/" + rDB.getFullYear();
+    const dd = getVal(row, ["quy ra số giờ làm", "số giờ quy đổi", "workingHours", "converted hours", "hours", "giờ làm"]);
     let dur = 0;
-    if (dd !== undefined && dd !== "" && !isNaN(parseFloat(String(dd).replace(",",".")))) { const pv = parseFloat(String(dd).replace(",",".")); dur = pv > 0 && pv <= 1 && String(dd).length > 5 ? pv*24 : pv; }
+    if (dd !== undefined && dd !== "" && !isNaN(parseFloat(String(dd).replace(",", ".")))) { const pv = parseFloat(String(dd).replace(",", ".")); dur = pv > 0 && pv <= 1 && String(dd).length > 5 ? pv * 24 : pv; }
     else {
-      const fv = getVal(row, ["from","t\u1EEB"]), tv2 = getVal(row, ["to","\u0111\u1EBFn"]);
-      if (fv && tv2) { const hF = parseTimeStrToHours(fv), hT = parseTimeStrToHours(tv2); dur = hT >= hF ? (hT-hF)*24 : (hT+1-hF)*24; }
-      else { const dr = getVal(row, ["duration","tk_duration","th\u1EDDi l\u01B0\u1EE3ng"]); if (typeof dr === "number") dur = dr > 0 && dr <= 1 ? dr*24 : dr; else if (typeof dr === "string") { const sv = dr.trim().replace(",","."); if (sv.includes(":")) { const p = sv.split(":"); dur = (parseInt(p[0])||0)+(parseInt(p[1])||0)/60; } else { const p2 = parseFloat(sv); if (!isNaN(p2)) dur = p2 > 0 && p2 <= 1 && sv.length > 4 ? p2*24 : p2; } } }
+      const fv = getVal(row, ["from", "từ"]), tv2 = getVal(row, ["to", "đến"]);
+      if (fv && tv2) { const hF = parseTimeStrToHours(fv), hT = parseTimeStrToHours(tv2); dur = hT >= hF ? (hT - hF) * 24 : (hT + 1 - hF) * 24; }
+      else { const dr = getVal(row, ["duration", "tk_duration", "thời lượng"]); if (typeof dr === "number") dur = dr > 0 && dr <= 1 ? dr * 24 : dr; else if (typeof dr === "string") { const sv = dr.trim().replace(",", "."); if (sv.includes(":")) { const p = sv.split(":"); dur = (parseInt(p[0]) || 0) + (parseInt(p[1]) || 0) / 60; } else { const p2 = parseFloat(sv); if (!isNaN(p2)) dur = p2 > 0 && p2 <= 1 && sv.length > 4 ? p2 * 24 : p2; } } }
     }
     if (dur <= 0) return;
-    if (String(getVal(row, ["check","status"]) || "").toUpperCase().includes("DUPLICATE")) return;
+    if (String(getVal(row, ["check", "status"]) || "").toUpperCase().includes("DUPLICATE")) return;
     let inv2 = false; Object.keys(row).forEach((k) => { if (k.toLowerCase().startsWith("check") && String(row[k]).toUpperCase().includes("FALSE")) inv2 = true; }); if (inv2) return;
-    const rid = String(getVal(row, ["id","id number","tk_id"]) || "").trim();
-    const fn = String(getVal(row, ["full name","name","t\u00EAn"]) || "").trim();
-    const rU = rid.toUpperCase(); if (rU.includes("ATLS")||rU.includes("ECP")||rU.includes("KDG")||rU.includes("PRI")||rU.includes("TOTAL")||rU.includes("T\u1ED4NG")) return;
-    const key = norm(cL07)+"_"+norm(cls);
-    if (!combined[key]) combined[key] = { center:cL07, className:cls, teacherHours:0, actualTA:0, expectedTA:0, numStudents:0, isKDG:/(KDG)/i.test(norm(cls)), taDetails:[], teacherDetails:[], dailyMap:{} };
+    const rid = String(getVal(row, ["id", "id number", "tk_id"]) || "").trim();
+    const fn = String(getVal(row, ["full name", "name", "tên"]) || "").trim();
+    const rU = rid.toUpperCase(); if (rU.includes("ATLS") || rU.includes("ECP") || rU.includes("KDG") || rU.includes("PRI") || rU.includes("TOTAL") || rU.includes("TỔNG")) return;
+    const key = norm(cL07) + "_" + norm(cls);
+    if (!combined[key]) {
+      combined[key] = { 
+        center: cL07, 
+        bu: cL07.split(".")[0],
+        className: cls, 
+        teacherHours: 0, 
+        actualTA: 0, 
+        expectedTA: 0, 
+        numStudents: 0, 
+        isKDG: /(KDG)/i.test(norm(cls)), 
+        taDetails: [], 
+        teacherDetails: [], 
+        dailyMap: {} 
+      };
+    }
     combined[key].actualTA += dur;
-    combined[key].taDetails.push({ dateObj:rDB.getTime(), dateStr:ds, id:rid, name:fn, type:rawType, hours:dur, numStudents:0 });
-    if (!combined[key].dailyMap[ds]) combined[key].dailyMap[ds] = { ta:[], teacher:[] };
-    combined[key].dailyMap[ds].ta.push({ id:rid, name:fn, hours:dur, numStudents:0 });
+    combined[key].taDetails.push({ dateObj: rDB.getTime(), dateStr: ds, id: rid, name: fn, type: rawType, hours: dur, numStudents: 0 });
+    if (!combined[key].dailyMap[ds]) combined[key].dailyMap[ds] = { ta: [], teacher: [] };
+    combined[key].dailyMap[ds].ta.push({ id: rid, name: fn, hours: dur, numStudents: 0 });
   });
   // --- BUOC 2: Scan File A ---
   if (hRow !== -1) {
@@ -321,7 +342,21 @@ function runAuditComputation(params: any) {
       if (colM.dates.length === 0 && !fDate && !tDate) { const tv3 = parseFloat(String(row[colM.total]||"").replace(",",".")); if (tv3 > 0) { calcH += tv3; details.push({ dateObj:0, dateStr:"T\u1ED5ng h\u1EE3p", name:tc, hours:tv3, allowedTAs:0, numStudents:0 }); } }
       if (calcH <= 0) continue;
       const key2 = norm(mCA)+"_"+norm(cn);
-      if (!combined[key2]) combined[key2] = { center:mCA, className:cn, teacherHours:0, actualTA:0, expectedTA:0, numStudents:0, isKDG:/(KDG)/i.test(norm(cn)), taDetails:[], teacherDetails:[], dailyMap:{} };
+      if (!combined[key2]) {
+        combined[key2] = { 
+          center: mCA, 
+          bu: mCA.split(".")[0],
+          className: cn, 
+          teacherHours: 0, 
+          actualTA: 0, 
+          expectedTA: 0, 
+          numStudents: 0, 
+          isKDG: /(KDG)/i.test(norm(cn)), 
+          taDetails: [], 
+          teacherDetails: [], 
+          dailyMap: {} 
+        };
+      }
       combined[key2].teacherHours += calcH;
       details.forEach((d: any) => {
         if (d.numStudents > combined[key2].numStudents) combined[key2].numStudents = d.numStudents;
@@ -330,6 +365,105 @@ function runAuditComputation(params: any) {
         combined[key2].teacherDetails.push(d);
         combined[key2].dailyMap[d.dateStr].teacher.push({ name:d.name, hours:d.hours, allowedTAs:d.allowedTAs, numStudents:d.numStudents });
       });
+    }
+  }
+
+  // --- BUOC 2.1: Scan Bonus Data ---
+  if (bonusData && Array.isArray(bonusData)) {
+    let bHdr = -1;
+    for (let i = 0; i < Math.min(20, bonusData.length); i++) {
+      const row = bonusData[i]; if (!row) continue;
+      const arr: any[] = Array.isArray(row) ? row : Object.values(row);
+      const rs = arr.map((c) => String(c).toLowerCase()).join(" ");
+      if (rs.includes("center") || rs.includes("department") || rs.includes("full name")) { bHdr = i; break; }
+    }
+    if (bHdr !== -1) {
+      const bH: any[] = Array.isArray(bonusData[bHdr]) ? bonusData[bHdr] : Object.values(bonusData[bHdr]);
+      let bCenCol = -1, bNameCol = -1, bPaymentCol = 24; // Column Y is index 24 default
+      bH.forEach((h, idx) => {
+        const s = String(h).toLowerCase();
+        if (s.includes("center") || s.includes("department")) { if (bCenCol === -1) bCenCol = idx; }
+        else if (s.includes("full name") || s.includes("tên")) { if (bNameCol === -1) bNameCol = idx; }
+        else if (s.includes("payment") || s.includes("thanh toán") || s.includes("thành tiền") || s.includes("số tiền") || s.includes("bonus")) { bPaymentCol = idx; }
+      });
+      for (let i = bHdr + 1; i < bonusData.length; i++) {
+        const ra: any[] = Array.isArray(bonusData[i]) ? bonusData[i] : Object.values(bonusData[i]);
+        if (!ra || ra.length === 0) continue;
+        const bCen = String(ra[bCenCol] || "");
+        const mCen = resolveCenter(bCen, cmap);
+        if (!(VALID_CENTERS as Set<string>).has(mCen)) continue;
+        const bName = String(ra[bNameCol] || "").trim().toLowerCase();
+        if (!bName || INVALID_TEACHERS.some(inv => bName.includes(inv))) continue;
+        
+        let bRaw = String(ra[bPaymentCol] || "0").trim();
+        // Robust number parsing: remove thousand separators, handle decimal comma/dot
+        let bPayment = 0;
+        if (bRaw) {
+          let clean = bRaw.replace(/\s/g, "");
+          const lastComma = clean.lastIndexOf(",");
+          const lastDot = clean.lastIndexOf(".");
+          if (lastComma > lastDot) {
+            // VN style: 1.000.000,00 -> remove dots, replace comma with dot
+            clean = clean.replace(/\./g, "").replace(",", ".");
+          } else if (lastDot > lastComma) {
+            // US style: 1,000,000.00 -> remove commas
+            clean = clean.replace(/,/g, "");
+          } else if (lastComma !== -1 && lastComma === clean.indexOf(",")) {
+             // Only one comma, no dot. Is it 1,000 (thousand) or 1,0 (decimal)?
+             // If it's followed by 3 digits, likely thousand.
+             if (clean.length - lastComma === 4) clean = clean.replace(",", "");
+             else clean = clean.replace(",", ".");
+          } else if (lastDot !== -1 && lastDot === clean.indexOf(".")) {
+             // Only one dot, no comma. Is it 1.000 (thousand) or 1.0 (decimal)?
+             if (clean.length - lastDot === 4) clean = clean.replace(".", "");
+          }
+          bPayment = parseFloat(clean) || 0;
+        }
+
+        if (bPayment <= 0) continue;
+
+        const bu = mCen.split(".")[0];
+        const key = norm(mCen) + "_BONUS_" + i; // Unique key per bonus row
+        if (!combined[key]) {
+          combined[key] = { 
+            center: mCen, 
+            bu: bu,
+            className: "BONUS", 
+            teacherHours: 0, 
+            actualTA: 0, 
+            expectedTA: 0, 
+            numStudents: 0, 
+            isKDG: false, 
+            taDetails: [], 
+            teacherDetails: [], 
+            dailyMap: {},
+            sourceSheet: bonusSheetName || "Bonus"
+          };
+        }
+        
+        combined[key].teacherHours += bPayment;
+        const dsBonus = "Bonus";
+        if (!combined[key].dailyMap[dsBonus]) combined[key].dailyMap[dsBonus] = { ta: [], teacher: [] };
+        const bDetail = { 
+          dateObj: 0, 
+          dateStr: dsBonus, 
+          name: bName, 
+          hours: bPayment, 
+          allowedTAs: 0, 
+          numStudents: 0, 
+          type: "Bonus",
+          sourceSheet: bonusSheetName || "Bonus"
+        };
+        combined[key].teacherDetails.push(bDetail);
+        combined[key].dailyMap[dsBonus].teacher.push({ 
+          name: bDetail.name, 
+          hours: bDetail.hours, 
+          allowedTAs: 0, 
+          numStudents: 0, 
+          type: "Bonus",
+          sourceSheet: bDetail.sourceSheet
+        });
+      }
     }
   }
 

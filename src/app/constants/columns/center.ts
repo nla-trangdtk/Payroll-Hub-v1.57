@@ -35,6 +35,12 @@ export const CENTER_COLUMNS = [
     width: 140,
   },
   {
+    key: "chargeOther",
+    label: "CHARGE TO OTHER",
+    type: "currency" as const,
+    width: 140,
+  },
+  {
     key: "chargeRenewalProjects",
     label: "Charge Renewal",
     type: "currency" as const,

@@ -169,12 +169,15 @@ export function findColumnMapping(
           return v.includes("ID") || v.includes("MÃ NV") || v.includes("CMND");
         });
       } else if (tUp === "TOTAL PAYMENT") {
-        idx = fileHeaders.findIndex((h) => {
-          const v = h.toUpperCase();
-          return (
-            v.includes("TOTAL") || v.includes("TỔNG") || v.includes("THỰC NHẬN")
-          );
-        });
+        idx = fileHeaders.findIndex((h) => h.toUpperCase().includes("BONUS"));
+        if (idx === -1) {
+          idx = fileHeaders.findIndex((h) => {
+            const v = h.toUpperCase();
+            return (
+              v.includes("TOTAL") || v.includes("TỔNG") || v.includes("THỰC NHẬN")
+            );
+          });
+        }
       } else if (tUp === "BANK ACCOUNT NUMBER") {
         idx = fileHeaders.findIndex((h) => {
           const v = h.toUpperCase();
@@ -359,7 +362,8 @@ export const COMMON_FIELD_ALIASES: Record<string, string[]> = {
   "CHARGE TO LXO": ["LXO", "CHARGE LXO", "CHARGE TO LXO"],
   "CHARGE TO EC": ["EC", "CHARGE EC", "CHARGE TO EC"],
   "CHARGE TO PT-DEMO": ["PT-DEMO", "CHARGE PT-DEMO", "CHARGE TO PT-DEMO"],
-  "Charge MKT Local": ["MKT", "MKT LOCAL", "CHARGE MKT LOCAL", "CHARGE TO MKT LOCAL", "CHARGE MKT", "CHARGE OTHER", "CHARGE TO CENTER MKT"],
+  "Charge MKT Local": ["MKT", "MKT LOCAL", "CHARGE MKT LOCAL", "CHARGE TO MKT LOCAL", "CHARGE MKT", "CHARGE TO CENTER MKT"],
+  "CHARGE TO OTHER": ["CHARGE OTHER", "CHARGE TO OTHER", "OTHER"],
   "Charge Renewal Projects": [
     "RENEWAL",
     "RENEWAL PROJECTS",
@@ -386,6 +390,7 @@ export const COMMON_FIELD_ALIASES: Record<string, string[]> = {
     "TOTAL PAYMENT",
     "NET PAY",
     "AMOUNT",
+    "BONUS",
   ],
   Center: [
     "CENTER",

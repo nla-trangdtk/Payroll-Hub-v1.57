@@ -349,10 +349,12 @@ export function MasterAE() {
           | undefined;
         if (activeTab === "Hold_AE" && header === "Nghiệp vụ") {
           renderOption = (value: any, row: any) => {
-            const nghiepVu = String(row["Nghiệp vụ"] || "").toUpperCase();
+            const nghiepVu = String(row["Nghiệp vụ"] || row["NGHIỆP VỤ"] || "").toUpperCase();
+            const ss = String(row["Sheet Source"] || row["SHEET SOURCE"] || "").toUpperCase();
+            const isBonusSrc = ss.includes("BONUS") || ss.includes("SUMMER") || ss.includes("INSTRUCTORS");
+            
             const isHold = nghiepVu.includes("HOLD");
             const isCancel = nghiepVu.includes("CANCEL");
-
             const currentPeriodVal = appData.globalMonth || "03.2026";
             const currentPeriodParts = currentPeriodVal.split(".");
             const currentMonthNum = parseInt(currentPeriodParts[0], 10) || 3;
@@ -371,25 +373,23 @@ export function MasterAE() {
               inactiveStyle: string,
             ) => {
               const base =
-                "flex items-center justify-center w-8 h-8 rounded-full border transition-all text-sm shadow-sm";
+                "flex items-center justify-center h-7 px-2.5 rounded-full border text-[10px] font-bold tracking-wider transition-colors select-none min-w-[54px]";
               if (!isPeriodMatch) {
-                return `${base} opacity-30 grayscale cursor-not-allowed pointer-events-none ${active ? activeStyle : inactiveStyle}`;
+                return `${base} opacity-20 grayscale cursor-not-allowed pointer-events-none ${active ? activeStyle : inactiveStyle}`;
               }
               return `${base} cursor-pointer ${
                 active
-                  ? `${activeStyle} scale-110 font-bold border-slate-400 z-10 shadow-md`
-                  : `${inactiveStyle} opacity-40 border-slate-200 hover:opacity-100 hover:bg-slate-100`
+                  ? `${activeStyle} border-current shadow-sm`
+                  : `${inactiveStyle} border-slate-200 hover:bg-slate-100 hover:border-slate-300`
               }`;
             };
 
             const titleAdd = !isPeriodMatch
               ? `Chỉ sửa đổi được tại card tháng chọn: ${rowReportingMonth}`
               : "Add";
-
             const titleHold = !isPeriodMatch
               ? `Chỉ sửa đổi được tại card tháng chọn: ${rowReportingMonth}`
               : "Hold";
-
             const titleCancel = !isPeriodMatch
               ? `Chỉ sửa đổi được tại card tháng chọn: ${rowReportingMonth}`
               : "Cancel";
@@ -397,8 +397,19 @@ export function MasterAE() {
             return (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center gap-2.5 w-full min-w-[150px]"
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseUp={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => e.stopPropagation()}
+                className="flex items-center justify-center gap-1.5 w-full min-w-[210px] py-1"
               >
+                {isBonusSrc && (
+                  <div 
+                    className="flex items-center justify-center h-7 px-2.5 rounded-full border border-amber-300 bg-amber-100 text-amber-700 shadow-sm cursor-help text-[10px] font-bold select-none min-w-[54px]"
+                    title="Bonus (từ sheet Summer/Instructors)"
+                  >
+                    <span>B</span>
+                  </div>
+                )}
                 <button
                   onClick={() => {
                     if (!isPeriodMatch) return;
@@ -413,13 +424,13 @@ export function MasterAE() {
                   }}
                   className={buttonClass(
                     !isHold && !isCancel,
-                    "bg-emerald-50 border-emerald-400 text-emerald-700",
-                    "bg-slate-50 border-transparent text-slate-400",
+                    "bg-emerald-600 border-emerald-600 text-white",
+                    "bg-slate-50 text-slate-400",
                   )}
                   title={titleAdd}
                   disabled={!isPeriodMatch}
                 >
-                  <span>☑️</span>
+                  <span>A</span>
                 </button>
                 <button
                   onClick={() => {
@@ -435,13 +446,13 @@ export function MasterAE() {
                   }}
                   className={buttonClass(
                     isHold,
-                    "bg-amber-50 border-amber-400 text-amber-700",
-                    "bg-slate-50 border-transparent text-slate-400",
+                    "bg-amber-500 border-amber-500 text-white",
+                    "bg-slate-50 text-slate-400",
                   )}
                   title={titleHold}
                   disabled={!isPeriodMatch}
                 >
-                  <span>✖️</span>
+                  <span>H</span>
                 </button>
                 <button
                   onClick={() => {
@@ -457,13 +468,13 @@ export function MasterAE() {
                   }}
                   className={buttonClass(
                     isCancel,
-                    "bg-slate-100 border-slate-400 text-slate-700",
-                    "bg-slate-50 border-transparent text-slate-400",
+                    "bg-rose-500 border-rose-500 text-white",
+                    "bg-slate-50 text-slate-400",
                   )}
                   title={titleCancel}
                   disabled={!isPeriodMatch}
                 >
-                  <span>©️</span>
+                  <span>C</span>
                 </button>
               </div>
             );
@@ -478,6 +489,7 @@ export function MasterAE() {
           filterable: true,
           readOnly: isReadOnly,
           render: renderOption,
+          width: header === "Nghiệp vụ" ? 270 : undefined,
         };
       });
   }, [currentData.headers, activeTab, handleCellChange, appData.globalMonth]);
@@ -519,11 +531,23 @@ export function MasterAE() {
                   <PuppyLogo size={40} className="shrink-0 hidden md:flex" />
                   <div className="min-w-0 text-[11px] leading-[15px] h-[63px]">
                     <div className="flex items-center gap-3 mb-[8px]">
-                      <h2 className="text-[29px] leading-[17px] font-bold font-serif text-foreground tracking-tight flex items-end gap-1" style={{ fontSize: "29px", fontWeight: "bold", lineHeight: "17px" }}>
+                      <h2
+                        className="text-[43px] leading-[21px] font-bold font-waterfall text-foreground tracking-tight flex items-end gap-1"
+                        style={{
+                          fontSize: "43px",
+                          fontWeight: "bold",
+                          lineHeight: "21px",
+                          fontFamily: "Waterfall",
+                        }}
+                      >
                         Final from{" "}
                         <span
-                          className="not-italic font-bold font-script text-3xl md:text-5xl lowercase inline-block transform -translate-y-0.5 h-[39px]"
-                          style={{ color: "#803d53" }}
+                          className="not-italic font-bold font-script lowercase inline-block transform -translate-y-0.5 h-[39px]"
+                          style={{
+                            color: "#803d53",
+                            fontSize: "45px",
+                            lineHeight: "51px",
+                          }}
                         >
                           ae
                         </span>
@@ -539,7 +563,8 @@ export function MasterAE() {
                 <div className="flex items-center gap-2 relative z-10 shrink-0 ml-auto justify-end">
                   <button
                     onClick={() => setView("upload")}
-                    className="flex items-center gap-2 px-6 h-11 border border-primary/20 rounded-full bg-primary/5 text-primary font-bold text-[0.6875rem] uppercase tracking-widest hover:bg-primary/10 transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-6 border border-primary/20 rounded-full bg-primary/5 text-primary font-bold text-[0.6875rem] uppercase tracking-widest hover:bg-primary/10 transition-colors shadow-sm"
+                    style={{ height: "40px", width: "201.656px" }}
                   >
                     <UploadCloud className="w-4 h-4" />
                     Upload Master AE
@@ -548,8 +573,9 @@ export function MasterAE() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
-                        className="flex items-center gap-4 px-6 h-11 border border-border rounded-full bg-white text-muted-foreground hover:text-primary transition-all group shadow-sm"
+                        className="flex items-center gap-4 px-6 border border-border rounded-full bg-white text-muted-foreground hover:text-primary transition-all group shadow-sm"
                         title="Chuyển bảng dữ liệu"
+                        style={{ height: "42px" }}
                       >
                         {(() => {
                           const active = tabs.find((t) => t.id === activeTab);
@@ -823,8 +849,10 @@ export function MasterAE() {
                 </div>
               </div>
 
-              {/* Content Area */}
-              <div className="flex-1 flex flex-col min-h-0 relative z-10 w-full overflow-hidden">
+              <div
+                className="flex-1 flex flex-col min-h-0 relative z-10 w-full overflow-hidden"
+                style={{ paddingLeft: "0px" }}
+              >
                 {activeTab === "BulkPayment" ? (
                   <BulkPayment
                     showLeftCard={showLeftCard}

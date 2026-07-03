@@ -28,7 +28,44 @@ import {
   isMoneyColumn,
   autoMapColumns,
   fetchWithBackoff,
+  removeVietnameseTones,
 } from "../../lib/utils/data-utils";
+
+function cleanIDNumber(val: any): string {
+  if (val === undefined || val === null) return "";
+  let str = String(val).trim();
+  if (typeof val === "number") {
+    // avoid scientific notation
+    if (str.includes("E") || str.includes("e") || str.includes("+")) {
+      str = val.toLocaleString("fullwide", { useGrouping: false });
+    }
+    // split on decimal point
+    if (str.includes(".")) {
+      str = str.split(".")[0];
+    }
+  } else {
+    // If it's a string, it might still look like "1.2345678912e11" or "341243124312.0"
+    if (str.includes("E") || str.includes("e")) {
+      const num = Number(str);
+      if (!isNaN(num)) {
+        str = num.toLocaleString("fullwide", { useGrouping: false });
+      }
+    }
+    if (str.includes(".")) {
+      const parts = str.split(".");
+      if (parts[1] === "0" || parts[1] === "00" || /^[0]+$/.test(parts[1])) {
+        str = parts[0];
+      }
+    }
+  }
+  return str;
+}
+
+function cleanFullName(val: any): string {
+  if (val === undefined || val === null) return "";
+  const str = String(val).trim();
+  return removeVietnameseTones(str).toUpperCase();
+}
 import {
   mapL07,
   getCenterInfoByL07,
@@ -193,6 +230,7 @@ export function AEDataConfig({
     "CHARGE TO EC",
     "CHARGE TO PT-DEMO",
     "Charge MKT Local",
+    "CHARGE TO OTHER",
     "Charge Renewal Projects",
     "Charge Discovery Camp",
     "Charge Summer Outing",
@@ -578,20 +616,31 @@ export function AEDataConfig({
         if (idx !== -1) return idx;
       }
       
-      // 1. Exact Match (either targetField itself or an exact match on fuzzy Keywords)
-      const idx = headers.findIndex((h: any) => {
-        const hUp = String(h).toUpperCase().trim();
-        if (hUp === targetField.toUpperCase()) return true;
-        return fuzzyKeywords.some((k) => hUp === k.toUpperCase().trim());
-      });
+      // 1. Exact Match on targetField
+      let idx = headers.findIndex((h: any) => String(h).toUpperCase().trim() === targetField.toUpperCase());
       if (idx !== -1) return idx;
 
-      // 2. Contains Match
-      return headers.findIndex((h: any) => {
-        const hUp = String(h).toUpperCase().trim();
-        if (hUp === targetField.toUpperCase()) return true;
-        return fuzzyKeywords.some((k) => hUp.includes(k.toUpperCase().trim()));
-      });
+      // 2. Exact Match on fuzzy keywords
+      if (fuzzyKeywords && fuzzyKeywords.length > 0) {
+        idx = headers.findIndex((h: any) => {
+          const hUp = String(h).toUpperCase().trim();
+          return fuzzyKeywords.some((k) => hUp === k.toUpperCase().trim());
+        });
+        if (idx !== -1) return idx;
+      }
+
+      // 3. Contains Match on targetField
+      idx = headers.findIndex((h: any) => String(h).toUpperCase().trim().includes(targetField.toUpperCase()));
+      if (idx !== -1) return idx;
+
+      // 4. Contains Match on fuzzy keywords
+      if (fuzzyKeywords && fuzzyKeywords.length > 0) {
+        return headers.findIndex((h: any) => {
+          const hUp = String(h).toUpperCase().trim();
+          return fuzzyKeywords.some((k) => hUp.includes(k.toUpperCase().trim()));
+        });
+      }
+      return -1;
     };
 
     setIsProcessing(true);
@@ -627,6 +676,7 @@ export function AEDataConfig({
         "CHARGE TO EC",
         "CHARGE TO PT-DEMO",
         "Charge MKT Local",
+        "CHARGE TO OTHER",
         "Charge Renewal Projects",
         "Charge Discovery Camp",
         "Charge Summer Outing",
@@ -680,6 +730,8 @@ export function AEDataConfig({
               n.includes("SHEET1") ||
               n.includes("HOLD") ||
               n.includes("ADD") ||
+              n.includes("SUMMER") ||
+              n.includes("BONUS") ||
               n.includes("SO SÁNH AE");
 
             if (!isRelevant) return false;
@@ -794,7 +846,7 @@ export function AEDataConfig({
                     const t = parseMoneyToNumber(rawTP);
                     const nameVal =
                       iN !== -1 && row[iN] !== undefined
-                        ? String(row[iN]).trim()
+                        ? cleanFullName(row[iN])
                         : "";
 
                     // Force Bank Account Number to be string
@@ -817,7 +869,7 @@ export function AEDataConfig({
 
                     const idVal =
                       iId !== -1 && row[iId] !== undefined
-                        ? String(row[iId]).trim()
+                        ? cleanIDNumber(row[iId])
                         : "";
 
                     let type = "Liên ngân hàng";
@@ -874,6 +926,83 @@ export function AEDataConfig({
                       "TÊN FILE": item.name || "",
                       _fileBank: item.bank || "",
                       _fileMonth: itemMonth,
+                    });
+                  }
+                }
+              }
+
+              if (nameUpper.includes("SUMMER") || nameUpper.includes("BONUS")) {
+                let headerRowIndex = -1;
+                for (let r = 0; r < Math.min(50, rows.length); r++) {
+                  const rowStr = rows[r].map(c => String(c || "").toUpperCase()).join(" ");
+                  if (rowStr.includes("BONUS") && (rowStr.includes("INSTRUCTOR") || rowStr.includes("CENTER"))) {
+                    headerRowIndex = r;
+                    break;
+                  }
+                }
+
+                if (headerRowIndex !== -1) {
+                  foundAnySheet = true;
+                  sheetProcessed = true;
+                  const h = rows[headerRowIndex].map(c => String(c || "").trim());
+                  
+                  const iCenter = getColIndex(h, "Center", item.columnMapping, ["NORTH CENTER", "DEPARTMENT NAME", "CENTER", "CENTER NOTE", "CENTERS", "TRUNG TÂM", "MÃ AE", "L07"]);
+                  const iName = getColIndex(h, "Full name", item.columnMapping, ["HỌ & TÊN INSTRUCTOR", "NAME", "INSTRUCTOR"]);
+                  const iId = getColIndex(h, "ID Number", item.columnMapping, ["SỐ CCCD INSTRUCTOR", "ID NUMBER", "CCCD"]);
+                  const iBonus = getColIndex(h, "TOTAL PAYMENT", item.columnMapping, ["BONUS"]);
+                  const iEmail = getColIndex(h, "Email", item.columnMapping, ["INSTRUCTOR'S EMAIL", "EMAIL"]);
+
+                  for (let r = headerRowIndex + 1; r < rows.length; r++) {
+                    const row = rows[r];
+                    if (!row || row.every(cell => cell === "")) continue;
+
+                    const rawBonus = iBonus !== -1 ? row[iBonus] : 0;
+                    const bonusVal = parseMoneyToNumber(rawBonus);
+                    if (bonusVal === 0) continue;
+
+                    const idVal = iId !== -1 ? String(row[iId] || "").trim() : "";
+                    const nameVal = iName !== -1 ? String(row[iName] || "").trim() : "";
+                    const centerVal = iCenter !== -1 ? String(row[iCenter] || "").trim() : "";
+                    const emailVal = iEmail !== -1 ? String(row[iEmail] || "").trim() : "";
+
+                    // Resolve Center to BU/L07
+                    let l07 = centerVal;
+                    let business = "";
+                    const centerKey = centerVal.toLowerCase();
+                    if (aeMap[centerKey]) {
+                      l07 = aeMap[centerKey].name;
+                      business = aeMap[centerKey].bus;
+                    } else {
+                      const info = getCenterInfoByAECode(centerVal);
+                      if (info) {
+                        l07 = info.l07;
+                        business = info.bus;
+                      } else {
+                        const mapped = mapL07(centerVal);
+                        const info2 = getCenterInfoByL07(mapped);
+                        if (info2) {
+                          l07 = info2.l07;
+                          business = info2.bus;
+                        } else {
+                          l07 = mapped;
+                        }
+                      }
+                    }
+
+                    holdData.push({
+                      "No.": holdData.length + 1,
+                      "Tháng báo cáo": itemMonth,
+                      "ID Number": idVal,
+                      "Full name": nameVal,
+                      "TOTAL PAYMENT": bonusVal,
+                      "BU": business,
+                      "L07": l07,
+                      "Nghiệp vụ": "⏩",
+                      "Sheet Source": sheetName,
+                      "Note": `Summer Bonus - ${centerVal}`,
+                      "Instructor's Email": emailVal,
+                      "TÊN FILE": item.name || "",
+                      _fileMonth: itemMonth
                     });
                   }
                 }
@@ -1027,11 +1156,11 @@ export function AEDataConfig({
 
                     const idVal =
                       iId !== -1 && row[iId] !== undefined
-                        ? String(row[iId]).trim()
+                        ? cleanIDNumber(row[iId])
                         : "";
                     const nameVal =
                       iN !== -1 && row[iN] !== undefined
-                        ? String(row[iN]).trim()
+                        ? cleanFullName(row[iN])
                         : "";
 
                     let accVal = "";
@@ -1092,6 +1221,7 @@ export function AEDataConfig({
                       "TOTAL PAYMENT": numTP,
                       "Mã ae": centerNote,
                       "Sheet Source": sheetSource,
+                      "Nghiệp vụ": sheetSource.toUpperCase().includes("ADD") ? "ADD" : "Hold",
                       Note: note,
                       "TÊN FILE": item.name || "",
                       _fileBank: item.bank || "",
@@ -1143,8 +1273,8 @@ export function AEDataConfig({
                     const row = rows[r];
                     if (!row || row.length === 0) continue;
 
-                    const idVal = String(row[cID] || "").trim();
-                    const nameVal = String(row[2] || "").trim();
+                    const idVal = cleanIDNumber(row[cID]);
+                    const nameVal = cleanFullName(row[2]);
                     let accVal = String(row[cBank] || "").trim();
                     const taxCode = String(row[cTax] || "").trim();
                     const contractNo = String(row[5] || "").trim();
@@ -1153,6 +1283,7 @@ export function AEDataConfig({
                     const note = String(row[8] || "").trim();
 
                     const { rowShouldNegate, sheetSource } = getRowShouldNegate(note);
+                    const nghiepVu = sheetSource.toUpperCase().includes("ADD") ? "ADD" : "Hold";
 
                     const rawTP = row[6] !== undefined ? row[6] : "";
                     let numTP = parseMoneyToNumber(rawTP);
@@ -1183,6 +1314,7 @@ export function AEDataConfig({
                       "TOTAL PAYMENT": numTP,
                       "Mã ae": centerNote,
                       "Sheet Source": sheetSource,
+                      "Nghiệp vụ": nghiepVu,
                       Note: note,
                       "TÊN FILE": item.name || "",
                       _fileBank: item.bank || "",
@@ -1253,7 +1385,8 @@ export function AEDataConfig({
                       "CHARGE TO LXO": ["LXO", "CHARGE LXO", "CHARGE TO LXO", "CHARGE LXP"],
                       "CHARGE TO EC": ["EC", "CHARGE EC", "CHARGE TO EC"],
                       "CHARGE TO PT-DEMO": ["PT-DEMO", "CHARGE PT-DEMO", "CHARGE TO PT-DEMO"],
-                      "Charge MKT Local": ["MKT", "MKT LOCAL", "CHARGE MKT LOCAL", "CHARGE TO MKT LOCAL", "CHARGE MKT", "CHARGE OTHER", "CHARGE TO CENTER MKT"],
+                      "Charge MKT Local": ["MKT", "MKT LOCAL", "CHARGE MKT LOCAL", "CHARGE TO MKT LOCAL", "CHARGE MKT", "CHARGE TO CENTER MKT"],
+                      "CHARGE TO OTHER": ["CHARGE OTHER", "CHARGE TO OTHER", "OTHER"],
                       "Charge Renewal Projects": ["RENEWAL", "RENEWAL PROJECTS", "CHARGE TO RENEWAL PROJECTS", "CHARGE RENEWAL"],
                       "Charge Discovery Camp": ["DISCOVERY", "DISCOVERY CAMP", "CHARGE TO DISCOVERY CAMP", "CHARGE DISCOVERY"],
                       "Charge Summer Outing": ["SUMMER OUTING", "CHARGE TO SUMMER OUTING", "CHARGE SUMMER"],
@@ -1321,7 +1454,11 @@ export function AEDataConfig({
                         ? String(row[idxName]).trim()
                         : "";
 
-                    if (!accVal) continue;
+                    const idxT = colIndices["TOTAL PAYMENT"];
+                    const rawTP = idxT !== -1 ? row[idxT] : 0;
+                    const numTP = parseMoneyToNumber(rawTP);
+
+                    if (!accVal && numTP === 0) continue;
 
                     if (
                       (nameVal !== "" || idxName === -1)
@@ -1480,6 +1617,7 @@ export function AEDataConfig({
         "CHARGE TO EC",
         "CHARGE TO PT-DEMO",
         "Charge MKT Local",
+        "CHARGE TO OTHER",
         "Charge Renewal Projects",
         "Charge Discovery Camp",
         "Charge Summer Outing",
@@ -1532,8 +1670,8 @@ export function AEDataConfig({
         const rawCenterVal = String(row["Mã ae"] || row["CENTER"] || "").trim();
         const aeMap = appData.AE_Map;
 
-        let l07 = rawCenterVal;
-        let business = "";
+        let l07 = String(row["L07"] || "").trim() || rawCenterVal;
+        let business = String(row["Business"] || row["BU"] || "").trim();
 
         if (rawCenterVal) {
           const rawKey = rawCenterVal.toLowerCase();
@@ -1651,12 +1789,16 @@ export function AEDataConfig({
         }
       });
 
-      // Lọc các bản ghi có 'Bank Account Number' không trống cho Sheet 1
-      const verifiedSheet1Data = finalSheet1Data.filter(r => r["Bank Account Number"] && String(r["Bank Account Number"]).trim() !== "");
+      // Lọc các bản ghi có số tiền thanh toán khác 0 cho Sheet 1
+      const verifiedSheet1Data = finalSheet1Data.filter(r => {
+        const tp = parseMoneyToNumber(r["TOTAL PAYMENT"] || 0);
+        const hasAcc = r["Bank Account Number"] && String(r["Bank Account Number"]).trim() !== "";
+        return tp !== 0 || hasAcc;
+      });
       const verifiedHoldData = finalHoldData;
 
       // Cập nhật map BU, L07 từ Sheet 1 cho Hold Data
-      verifiedHoldData.forEach((row) => {
+      verifiedHoldData.filter(Boolean).forEach((row) => {
         const id = row["ID Number"];
         if (id && sheet1Map[id] && sheet1Map[id].length > 0) {
           row["L07"] = row["L07"] || sheet1Map[id][0]["L07"];
@@ -1670,7 +1812,7 @@ export function AEDataConfig({
         const uploadTime = new Date().toISOString();
 
         // Standardize monthly values and fields for new incoming rows
-        verifiedHoldData.forEach((row) => {
+        verifiedHoldData.filter(Boolean).forEach((row) => {
           let rMonth = currentMonth;
           let rNghiepVu = row["Nghiệp vụ"] || "";
 
@@ -1697,6 +1839,7 @@ export function AEDataConfig({
         });
 
         const holdKeyFn = (r: any) => {
+          if (!r) return "";
           const id = String(r["ID Number"] || "").trim().toUpperCase();
           const month = normalizeMonth(r["Tháng báo cáo"] || r["_fileMonth"] || currentMonth);
           const tp = Math.round(parseMoneyToNumber(r["TOTAL PAYMENT"] || 0));

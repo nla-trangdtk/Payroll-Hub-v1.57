@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { AppData } from "../../types";
 import { INITIAL_APP_DATA } from "../../constants/initial-data";
 import { parseMoneyToNumber, removeVietnameseTones } from "../utils/data-utils";
+import { resolveL07BuFromAeCode } from "../utils/center-utils";
 
 // Configure localforage
 localforage.config({
@@ -175,46 +176,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                 }
               }
             });
-            if (!h.includes("Note")) {
-              saved.Hold_AE.headers.push("Note");
-            }
-            // --- REPAIR SHEET SOURCE FOR EXISTING HOLD DATA ---
             if (saved.Hold_AE.data && Array.isArray(saved.Hold_AE.data)) {
               saved.Hold_AE.data = saved.Hold_AE.data.map((row: any) => {
                 const newRow = { ...row };
-                const sheetSrc = String(newRow["Sheet Source"] || "").trim();
-                const noteVal = String(newRow["Note"] || "").trim();
-
-                const sheetSrcUp = sheetSrc.toUpperCase();
-                const noteUp = noteVal.toUpperCase();
-
-                // If Sheet Source is empty, or is equal to Note, or does not indicate a valid Hold/Add sheet name (must contain HOLD or ADD)
-                if (
-                  !sheetSrc ||
-                  sheetSrc === noteVal ||
-                  (!sheetSrcUp.includes("HOLD") && !sheetSrcUp.includes("ADD"))
-                ) {
-                  // Try to find a month number (e.g., T4, HOLD T4, Tháng 4) from _fileMonth, Note, or Sheet Source itself
-                  const searchStr =
-                    `${newRow["_fileMonth"] || ""} ${noteVal} ${sheetSrc}`.toUpperCase();
-                  const match = searchStr.match(
-                    /(?:T|THÁNG|THANG|HOLD T|HOLD THÁNG|HOLD|ADD)\s*(\d{1,2})/,
-                  );
-                  let monthStr = "";
-                  if (match) {
-                    monthStr = ` T${match[1]}`;
-                  } else {
-                    const numberMatch = searchStr.match(/\d+/);
-                    if (numberMatch) {
-                      monthStr = ` T${numberMatch[0]}`;
-                    }
-                  }
-
-                  // Preserve ADD if original search string indicates addition
-                  const isAdd = searchStr.includes("ADD");
-                  newRow["Sheet Source"] =
-                    `${isAdd ? "ADD" : "HOLD"}${monthStr}`;
-                }
+                if (!newRow["Sheet Source"]) newRow["Sheet Source"] = "Unknown";
                 return newRow;
               });
             }
@@ -410,8 +375,9 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       if (acc) accToSheet1[acc] = biz;
     });
 
-    const holdRows = present.Hold_AE?.data || [];
+    const holdRows = (present.Hold_AE?.data || []).filter(Boolean);
     holdRows.forEach((row, index) => {
+      if (!row) return;
       const id = String(row["ID Number"] || "").trim();
       const name = String(row["Full name"] || "").trim();
       const normalizedName = removeVietnameseTones(name).toUpperCase();
@@ -492,6 +458,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     // Now construct computed rows with "Tháng báo cáo", "Trạng thái", "Nghiệp vụ"
 
     const computedData = holdRows.map((row, index) => {
+      if (!row) return null as any;
       const id = String(row["ID Number"] || "").trim();
       const name = String(row["Full name"] || "").trim();
       const normalizedName = removeVietnameseTones(name).toUpperCase();
@@ -578,6 +545,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         type = "Cancel";
       } else if (upNvu.includes("ADD") || rawTrangThai.includes("ADD")) {
         type = "Add";
+      } else if (upNvu.includes("BONUS") || upNvu.includes("⏩") || upNvu.includes("⏯")) {
+        type = "⏩";
       } else {
         type = val >= 0 ? "Add" : "Hold";
       }
@@ -585,7 +554,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       let tinhTrangThanhToan = "";
       if (type.toUpperCase() === "HOLD") {
         tinhTrangThanhToan = `Pending từ tháng ${computedThangPhatSinh}`;
-      } else if (type.toUpperCase() === "ADD") {
+      } else if (type.toUpperCase() === "ADD" || type === "⏩" || type === "⏯") {
         tinhTrangThanhToan = `Đã thanh toán tại tháng ${finalReportingMonthStr}`;
       } else if (type.toUpperCase() === "CANCEL") {
         tinhTrangThanhToan = `Cancel từ tháng ${finalReportingMonthStr}`;
@@ -595,8 +564,18 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         (type.toUpperCase() === "HOLD" || type.toUpperCase() === "CANCEL") &&
         (itemYearNum * 12 + itemMonthNum < originYearNum * 12 + originMonthNum);
 
+      let l07 = String(row["L07"] || row["Mã ae"] || "").trim();
+      let bu = String(row["BU"] || "").trim();
+      const resolved = resolveL07BuFromAeCode(l07);
+      if (resolved) {
+        l07 = resolved.l07;
+        if (!bu) bu = resolved.bu;
+      }
+
       return {
         ...row,
+        "L07": l07,
+        "BU": bu,
         _originalIndex: index,
         _originalTinhTrangThanhToan: row["Tình trạng thanh toán"] !== undefined ? String(row["Tình trạng thanh toán"]) : "",
         "Tháng báo cáo": finalReportingMonthStr,
@@ -671,7 +650,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       Hold_AE: {
         ...present.Hold_AE,
         headers: reorderedHeaders,
-        data: computedData,
+        data: computedData.filter(Boolean),
       },
     };
   }, [state.present]);

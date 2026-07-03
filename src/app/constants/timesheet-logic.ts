@@ -45,6 +45,7 @@ export const TASK_COLUMNS: Record<string, string> = {
   "support lxo": "supportLxo",
   "support ec": "supportEc",
   "support mkt": "supportMkt",
+  other: "other",
   lpar: "parentMeeting",
   ldem: "demo",
   lret: "tutoring",

@@ -1,0 +1,25 @@
+201: 0 |                   ? saved.PivotConfig.chargeCols
+202: 0 |                   : [...(INITIAL_APP_DATA.PivotConfig?.chargeCols || [])],
+203: -1 |             };
+204: -2 |           }
+205: -2 | 
+206: -1 |           setState((prev) => ({
+207: -1 |             ...prev,
+208: 0 |             present: {
+209: 0 |               ...saved,
+210: -1 |             },
+211: -2 |           }));
+212: -3 |         }
+213: -3 |       } catch (e) {
+214: -3 |         console.error("Failed to load app data from storage", e);
+215: -3 |         toast.error("Không thể tải dữ liệu đã lưu.");
+216: -3 |       } finally {
+217: -3 |         setIsLoading(false);
+218: -4 |       }
+219: -5 |     };
+220: -5 |     loadData();
+221: -6 |   }, []);
+222: -6 | 
+223: -6 |   // ── Debounced sync to storage (1.5s) ──
+224: -5 |   useEffect(() => {
+225: -5 |     if (isLoading) return;

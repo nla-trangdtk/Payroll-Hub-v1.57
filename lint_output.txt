@@ -1,0 +1,10 @@
+
+> payroll-hub-2026@0.1.0 lint
+> eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+
+
+/app/applet/src/app/lib/contexts/AppDataContext.tsx
+  212:8  error  Parsing error: 'try' expected
+
+✖ 1 problem (1 error, 0 warnings)
+
